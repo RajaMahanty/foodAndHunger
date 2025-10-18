@@ -14,7 +14,7 @@
 
 /* Manual dark theme using class */
 .dark {
-    --color-bg-light: rgb(17 24 39);
+    --color-bg-light: oklch(0.25 0.06 177.13);
     --color-text-light: white;
 }
 

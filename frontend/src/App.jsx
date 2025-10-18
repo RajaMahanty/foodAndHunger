@@ -13,7 +13,7 @@ function App() {
     // add navbar and footer in this file
     <div>
       <Navbar />
-      <main>
+      <main className='body'>
         <Outlet context={{
           publicAxiosInstance
         }} />

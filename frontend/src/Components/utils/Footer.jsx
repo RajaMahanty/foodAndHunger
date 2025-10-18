@@ -2,7 +2,9 @@ import React from 'react'
 
 const Footer = () => {
     return (
-        <div>Footer</div>
+        <div className='flex justify-center align-middle footer p-7'>
+            @food&Hunger | All copyrights reserved
+        </div>
     )
 }
 
