@@ -4,7 +4,6 @@ import Home from '../../Components/main/Home';
 import { Outlet } from "react-router-dom";
 
 const HomePage = () => {
-    // const { response } = useOutletContext();
     return (
         <Home />
     )

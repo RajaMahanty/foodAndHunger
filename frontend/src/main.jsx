@@ -13,6 +13,8 @@ import Login from './pages/Auth/LoginPopUp';
 import Register from './pages/Auth/Register';
 import About from './pages/main/About';
 import JoinUs from './pages/Auth/JoinUs';
+import VDashboard from './pages/volunteer/VDashboard';
+import VolunteerDetail from './pages/volunteer/VolunteerDetail';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -30,7 +32,7 @@ const router = createBrowserRouter([
     ]
   },
   {
-    path: "/donor",
+    path: "/donors",
     element: <App />,
     ErrorElement: <CustomError />,
     // ErrorElement: <Error />, // create custom error component and change it
@@ -46,7 +48,7 @@ const router = createBrowserRouter([
     ]
   },
   {
-    path: "/recipient",
+    path: "/recipients",
     element: <App />,
     ErrorElement: <CustomError />, // create custom error component and change it
     children: [
@@ -59,7 +61,21 @@ const router = createBrowserRouter([
         element: <RecipientDetail />
       },
     ]
-
+  },
+  {
+    path: "/volunteers",
+    element: <App />,
+    ErrorElement: <CustomError />, // create custom error component and change it
+    children: [
+      {
+        path: "dashboard",
+        element: <VDashboard />
+      },
+      {
+        path: "details/:volunteer_id",
+        element: <VolunteerDetail />
+      },
+    ]
   },
   {
     path: "/auth",
