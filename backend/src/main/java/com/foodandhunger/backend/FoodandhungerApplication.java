@@ -1,5 +1,4 @@
 package com.foodandhunger.backend;
-
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -7,15 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.awt.*;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.Optional;
 
 @SpringBootApplication
 public class FoodandhungerApplication {
@@ -57,25 +56,104 @@ class UserDonor{
     }
 
     /* getters and setters */
+    // getters
+    String getUsername(){
+        return username;
+    }
 
+    String getPassword(){
+        return password;
+    }
+
+    String getEmail(){
+        return email;
+    }
+
+    // setters
+    void setUsername(String username){
+        this.username = username;
+    }
+
+    void setEmail(String email){
+        this.email = email;
+    }
+
+    void setPassword(String password){
+        this.password = password;
+    }
 }
 
 // 2. repository
-@Repository
-interface UserDonorRepository extends JpaRepository<UserDonor, Integer>{
+//@Repository
+interface UserDonorRepository extends JpaRepository<UserDonor, Integer> {
     // Spring Data JPA automatically provides: save, findAll, findById, deleteById, etc.
+    boolean existsByEmail(String email);
+    boolean existsByUsername(String email);
+    Optional<UserDonor> findByUsername(String username);
+    Optional<UserDonor> findByEmail(String email);
 }
 
-// 3. controller
-@RestController
-@RequestMapping("/api/auth/donor/")
-class UserDonorController{
+// dto
+class LoginRequest {
+    private String username;
+    private String password;
+    // getters and setters
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+
+// UserDetailsService for Authentication
+@Service
+class UserDonorService {
     @Autowired
     private UserDonorRepository userDonorRepository;
 
-    @PostMapping
-    public UserDonor createStudent(@RequestBody UserDonor s) {
-        // JPA will automatically save the new Student object and return the saved entity (with the new ID).
-        return userDonorRepository.save(s);
+    public String signup(UserDonor user) {
+        if (userDonorRepository.existsByEmail(user.getEmail())) {
+            return "email already registered";
+        }
+        if (userDonorRepository.existsByUsername(user.getUsername())) {
+            return "username already registered";
+        }
+        // Save password as plain text (not secure! for testing ONLY)
+        userDonorRepository.save(user);
+        return "successfully registered user";
+    }
+
+    public boolean validateUser(String username, String password) {
+        Optional<UserDonor> opt = userDonorRepository.findByUsername(username);
+        return opt.isPresent() && opt.get().getPassword().equals(password);
     }
 }
+
+
+// user_donor
+    // signup
+    // login
+    // logout
+// 3. controller
+@RestController
+@RequestMapping("/api/auth/donor")
+class UserDonorController {
+    @Autowired
+    private UserDonorService userDonorService;
+
+    @PostMapping("/signup")
+    public ResponseEntity<String> signup(@RequestBody UserDonor s) {
+        String msg = userDonorService.signup(s);
+        return ResponseEntity.ok(msg);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+        boolean success = userDonorService.validateUser(request.getUsername(), request.getPassword());
+        if (success) {
+            return ResponseEntity.ok("login successful for user: " + request.getUsername());
+        } else {
+            return ResponseEntity.status(401).body("invalid credentials");
+        }
+    }
+}
+
