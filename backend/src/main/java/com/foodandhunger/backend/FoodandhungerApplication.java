@@ -5,13 +5,17 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -84,7 +88,7 @@ class UserDonor{
 }
 
 // 2. repository
-//@Repository
+@Repository
 interface UserDonorRepository extends JpaRepository<UserDonor, Integer> {
     // Spring Data JPA automatically provides: save, findAll, findById, deleteById, etc.
     boolean existsByEmail(String email);
@@ -155,5 +159,30 @@ class UserDonorController {
             return ResponseEntity.status(401).body("invalid credentials");
         }
     }
-}
 
+    @GetMapping("/")
+    public ResponseEntity<String> hello(){
+        String str = "Welcome to food and hunger";
+        return ResponseEntity.ok(str);
+    }
+}
+@Configuration
+@EnableWebSecurity
+class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/auth/donor/signup",
+                                "/api/auth/donor/login",
+                                "/api/auth/donor/"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                );
+
+        return http.build();
+    }
+}

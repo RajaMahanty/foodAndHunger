@@ -45,7 +45,11 @@ const Navbar = () => {
 
     return (
         <nav className={`sticky top-0 z-50 transition-all duration-500 navbar ${scrolled ? "shadow-2xl py-2" : "shadow-md py-3"
-            }`}>
+            }`} style={{
+                backgroundColor: "var(--color-bg-light)",
+                color: "var(--color-text-light)",
+            }}
+        >
             <div className="flex items-center justify-between px-6 md:px-14 relative">
                 {/* Animated underline decoration */}
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-700"></div>
