@@ -37,6 +37,9 @@ public class DonationService implements ServicesStruct<DonationModel> {
     @Override
     public List<DonationModel> getAll() {
         LLogging.info("getAll()");
+
+
+
         try{
             List<DonationModel> allDonations = donationRepo.findAll();
             if (allDonations.isEmpty()){
@@ -61,6 +64,7 @@ public class DonationService implements ServicesStruct<DonationModel> {
             existing.setTitle(entity.getTitle());
             existing.setPhoto(entity.getPhoto());
             existing.setLocation(entity.getLocation());
+            existing.setAddress(entity.getAddress());
             return true;
         }catch (Exception e){
             LLogging.error(e.getMessage());

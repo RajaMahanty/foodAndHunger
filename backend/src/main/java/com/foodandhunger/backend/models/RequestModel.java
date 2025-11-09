@@ -31,6 +31,9 @@ public class RequestModel {
     @Getter
     @Setter
     private String type; // veg, non-veg
+    @Setter
+    @Getter
+    private String address;
 
     @CreationTimestamp
     @Column(name="created_at", nullable = false, updatable = false)
@@ -42,10 +45,11 @@ public class RequestModel {
 
 
     RequestModel(){}
-    RequestModel(String title, String description, double amount, String location){
+    RequestModel(String title, String address, String description, double amount, String location){
         this.title = title;
         this.description = description;
         this.amount = amount;
         this.location = location;
+        this.address = address;
     }
 }

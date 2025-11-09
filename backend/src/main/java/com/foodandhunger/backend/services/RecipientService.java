@@ -59,6 +59,7 @@ public class RecipientService implements ServicesStruct<RecipientModel> {
             existing.setName(entity.getName());
             existing.setAge(entity.getAge());
             existing.setAddress(entity.getAddress());
+            existing.setLocation(entity.getLocation());
             existing.setOrganization_certificate_id(entity.getOrganization_certificate_id());
             existing.setOrganizationName(entity.getOrganizationName());
             existing.setPan(entity.getPan());

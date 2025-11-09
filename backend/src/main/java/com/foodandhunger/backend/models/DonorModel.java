@@ -47,7 +47,9 @@ public class DonorModel {
     @Setter
     @Getter
     private String organization_certificate_id;
-
+    @Setter
+    @Getter
+    private String location;
     // Store binary data for images or certificates
     @Getter
     @Setter
@@ -67,11 +69,12 @@ public class DonorModel {
     @Column(name="updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public DonorModel(int userId, String name, int age, String address, String organizationName, String pan, String aadhaar, String phone, String email, String organization_certificate_id ){
+    public DonorModel(int userId, String location, String name, int age, String address, String organizationName, String pan, String aadhaar, String phone, String email, String organization_certificate_id ){
         this.userId=userId;
         this.name = name;
         this.age =age ;
         this.address =address ;
+        this.location = location;
         this.organizationName =organizationName ;
         this.pan =pan ;
         this.aadhaar =aadhaar ;

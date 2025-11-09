@@ -103,6 +103,7 @@ public class DonorService implements ServicesStruct<DonorModel> {
             existing.setName(donor.getName());
             existing.setAge(donor.getAge());
             existing.setAddress(donor.getAddress());
+            existing.setLocation(donor.getLocation());
             existing.setOrganization_certificate_id(donor.getOrganization_certificate_id());
             existing.setOrganizationName(donor.getOrganizationName());
             existing.setPan(donor.getPan());

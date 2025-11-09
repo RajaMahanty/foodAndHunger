@@ -31,6 +31,9 @@ public class DonationModel {
     @Setter
     @Getter
     private String location;
+    @Setter
+    @Getter
+    private String address;
     @Getter
     @Setter
     private String type;
@@ -43,10 +46,11 @@ public class DonationModel {
     private LocalDateTime updatedAt;
 
     public DonationModel(){}
-    public DonationModel(int donorId, String title, String description, byte[] photo, String location, String type){
+    public DonationModel(int donorId, String address, String title, String description, byte[] photo, String location, String type){
         this.donorId =  donorId;
         this.title = title;
         this.description = description;
+        this.address = address;
         this.photo = photo;
         this.location = location;
     }

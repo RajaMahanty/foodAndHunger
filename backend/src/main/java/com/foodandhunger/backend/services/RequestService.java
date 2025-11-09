@@ -58,6 +58,7 @@ public class RequestService implements ServicesStruct<RequestModel> {
             existing.setType(entity.getType());
             existing.setTitle(entity.getTitle());
             existing.setLocation(entity.getLocation());
+            existing.setAddress(entity.getAddress());
             return true;
         }catch (Exception e){
             LLogging.error(e.getMessage());

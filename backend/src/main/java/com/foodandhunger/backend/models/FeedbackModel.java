@@ -22,6 +22,7 @@ public class FeedbackModel {
     @Getter
     private int star;
 
+
     FeedbackModel(){}
     FeedbackModel(int userId, String message, int star){
         this.userId = userId;
