@@ -10,5 +10,6 @@ import java.util.Optional;
 
 public interface RequestRepo extends JpaRepository<RequestModel, Integer> {
     List<RecipientModel> findByLocation(String location);
+    List<RequestModel> findByTitleContainingIgnoreCase(String title);
 
 }
