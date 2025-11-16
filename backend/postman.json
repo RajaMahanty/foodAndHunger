@@ -1,216 +1,191 @@
 {
   "info": {
-    "_postman_id": "f0b0e7f2-8a12-4acb-b2c3-5a6d12a2c987",
-    "name": "Food And Hunger API Collection",
+    "_postman_id": "aa11c44b-90f3-4b25-9a80-req-apis-2025",
+    "name": "Request APIs",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "User",
-      "item": [
-        {
-          "name": "Signup",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"john_doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"12345\"\n}"
-            },
-            "url": { "raw": "http://localhost:8080/api/auth/user/signup" }
-          }
+      "name": "Add Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Need blankets\",\n  \"description\": \"For 50 people in shelter\",\n  \"amount\": 50,\n  \"location\": \"Delhi\",\n  \"address\": \"Sector 12\",\n  \"type\": \"Non-food\",\n  \"userId\": 1\n}"
         },
-        {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"john_doe\",\n  \"password\": \"12345\"\n}"
-            },
-            "url": { "raw": "http://localhost:8080/api/auth/user/login" }
-          }
-        },
-        {
-          "name": "Get All Users",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "http://localhost:8080/api/auth/user/" }
-          }
+        "url": {
+          "raw": "http://localhost:8080/api/request/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "add"]
         }
-      ]
+      }
     },
     {
-      "name": "Donor",
-      "item": [
-        {
-          "name": "Add Donor",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": 1,\n  \"name\": \"John Donor\",\n  \"age\": 35,\n  \"email\": \"donor@example.com\",\n  \"phone\": \"9876543210\",\n  \"location\": \"Delhi\",\n  \"organizationName\": \"Helping Hands\",\n  \"address\": \"Connaught Place\",\n  \"pan\": \"ABCDE1234F\"\n}"
-            },
-            "url": { "raw": "http://localhost:8080/api/donor/add" }
-          }
-        },
-        {
-          "name": "Upload Donor Files",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "photo", "type": "file", "src": "" },
-                { "key": "certificate", "type": "file", "src": "" },
-                { "key": "signature", "type": "file", "src": "" }
-              ]
-            },
-            "url": { "raw": "http://localhost:8080/api/donor/1/upload" }
-          }
-        },
-        {
-          "name": "Get Donor by User ID",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "http://localhost:8080/api/donor/user/1" }
-          }
+      "name": "Get Request by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "1"]
         }
-      ]
+      }
     },
     {
-      "name": "Recipient",
-      "item": [
-        {
-          "name": "Add Recipient",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": 2,\n  \"name\": \"Rita Receiver\",\n  \"age\": 29,\n  \"address\": \"Noida\",\n  \"organizationName\": \"Care4All\",\n  \"location\": \"Noida\",\n  \"phone\": \"9998887777\",\n  \"email\": \"rita@example.com\"\n}"
-            },
-            "url": { "raw": "http://localhost:8080/api/recipient/add" }
-          }
-        },
-        {
-          "name": "Search Recipient by Name",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/recipient/search?query=rita"
-            }
-          }
+      "name": "Get All Requests",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/all",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "all"]
         }
-      ]
+      }
     },
     {
-      "name": "Donation",
-      "item": [
-        {
-          "name": "Add Donation",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "donorId", "value": "1", "type": "text" },
-                { "key": "title", "value": "Food Packets", "type": "text" },
-                { "key": "description", "value": "10 packets of rice and dal", "type": "text" },
-                { "key": "photo", "type": "file", "src": "" }
-              ]
-            },
-            "url": { "raw": "http://localhost:8080/api/donation/add" }
-          }
+      "name": "Update Request",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Need blankets ASAP\",\n  \"description\": \"Urgent help needed\",\n  \"amount\": 60,\n  \"location\": \"Delhi\",\n  \"address\": \"Sector 12\",\n  \"type\": \"Non-food\",\n  \"status\": \"pending\"\n}"
         },
-        {
-          "name": "Get All Donations",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "http://localhost:8080/api/donation/all" }
-          }
-        },
-        {
-          "name": "Approve Donation",
-          "request": {
-            "method": "PATCH",
-            "url": {
-              "raw": "http://localhost:8080/api/donation/1/status?status=approved&remarks=valid+donation"
-            }
-          }
+        "url": {
+          "raw": "http://localhost:8080/api/request/update/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "update", "1"]
         }
-      ]
+      }
     },
     {
-      "name": "Request",
-      "item": [
-        {
-          "name": "Add Request",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Need blankets\",\n  \"description\": \"For 50 people in shelter\",\n  \"amount\": 50,\n  \"location\": \"Delhi\",\n  \"type\": \"Non-food\",\n  \"address\": \"Sector 12\"\n}"
-            },
-            "url": { "raw": "http://localhost:8080/api/request/add" }
-          }
-        },
-        {
-          "name": "Get All Requests",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "http://localhost:8080/api/request/all" }
-          }
+      "name": "Delete Request",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "http://localhost:8080/api/request/delete/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "delete", "1"]
         }
-      ]
+      }
     },
     {
-      "name": "Feedback",
-      "item": [
-        {
-          "name": "Add Feedback",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": 1,\n  \"message\": \"Excellent service!\",\n  \"star\": 5\n}"
-            },
-            "url": { "raw": "http://localhost:8080/api/feedback/add" }
-          }
-        },
-        {
-          "name": "Get All Feedbacks",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "http://localhost:8080/api/feedback/all" }
-          }
-        },
-        {
-          "name": "Get Average Rating",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "http://localhost:8080/api/feedback/average" }
-          }
+      "name": "Search Request",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/search?query=blanket",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "search"],
+          "query": [
+            { "key": "query", "value": "blanket" }
+          ]
         }
-      ]
+      }
+    },
+    {
+      "name": "Check Request Exists",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/exists/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "exists", "1"]
+        }
+      }
+    },
+    {
+      "name": "Count Requests",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/count",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "count"]
+        }
+      }
+    },
+    {
+      "name": "Requests by User",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/user/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "user", "1"]
+        }
+      }
+    },
+    {
+      "name": "Requests by Location",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/location/delhi",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "location", "delhi"]
+        }
+      }
+    },
+    {
+      "name": "Requests by Status",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/request/status/pending",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "status", "pending"]
+        }
+      }
+    },
+    {
+      "name": "Upload Request Photo",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "multipart/form-data" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "photo", "type": "file", "src": "" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/request/1/photo",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "request", "1", "photo"]
+        }
+      }
     }
   ]
 }
