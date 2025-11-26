@@ -17,18 +17,21 @@ public class FileUploadUtil {
      * @return Relative file path (e.g. "/uploads/12/profile_pic.jpg")
      * @throws Exception if saving fails
      */
-    public static String saveUserFile(String baseDir, int userId, MultipartFile file, String customName) throws Exception {
+    public static String saveUserFile(String baseDir, int userId, MultipartFile file, String customName)
+            throws Exception {
         if (file.isEmpty()) {
             throw new Exception("File is empty");
         }
 
         // Ensure base folder exists
         File baseFolder = new File(baseDir);
-        if (!baseFolder.exists()) baseFolder.mkdirs();
+        if (!baseFolder.exists())
+            baseFolder.mkdirs();
 
         // Create user folder
         File userFolder = new File(baseFolder, String.valueOf(userId));
-        if (!userFolder.exists()) userFolder.mkdirs();
+        if (!userFolder.exists())
+            userFolder.mkdirs();
 
         // Extract extension (e.g. .jpg, .png)
         String original = file.getOriginalFilename();
@@ -38,7 +41,9 @@ public class FileUploadUtil {
         }
 
         // Build final filename (custom name + timestamp)
-        String fileName = customName + "_" + System.currentTimeMillis() + extension;
+        // Sanitize custom name to remove spaces
+        String sanitizedCustomName = customName.replaceAll("\\s+", "_");
+        String fileName = sanitizedCustomName + "_" + System.currentTimeMillis() + extension;
 
         // Define target path
         Path filePath = Paths.get(userFolder.getAbsolutePath(), fileName);

@@ -53,8 +53,7 @@ public class DonationService implements ServicesStruct<DonationModel> {
     public boolean create(DonationModel entity) {
         try {
             boolean exists = donationRepo.existsByTitleAndDonorId(
-                    entity.getTitle(), entity.getDonorId()
-            );
+                    entity.getTitle(), entity.getDonorId());
 
             if (exists) {
                 LLogging.warn("Duplicate donation ignored");
@@ -71,7 +70,8 @@ public class DonationService implements ServicesStruct<DonationModel> {
 
     @Override
     public boolean delete(int id) {
-        if (!donationRepo.existsById(id)) return false;
+        if (!donationRepo.existsById(id))
+            return false;
         donationRepo.deleteById(id);
         return true;
     }
@@ -79,8 +79,7 @@ public class DonationService implements ServicesStruct<DonationModel> {
     @Override
     public ResponseEntity<List<DonationModel>> search(String query) {
         return ResponseEntity.ok(
-                donationRepo.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query)
-        );
+                donationRepo.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query));
     }
 
     @Override
@@ -98,7 +97,8 @@ public class DonationService implements ServicesStruct<DonationModel> {
         try {
             DonationModel donation = donationRepo.findById(donationId)
                     .orElseThrow(() -> new RuntimeException("Donation not found"));
-            String path = FileUploadUtil.saveUserFile("uploads/donations", donation.getDonorId(), photo, donation.getTitle());
+            String path = FileUploadUtil.saveUserFile("uploads/donations", donation.getId(), photo,
+                    donation.getTitle());
             donation.setPhoto(path);
             donationRepo.save(donation);
             return ResponseEntity.ok(donation);

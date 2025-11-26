@@ -119,7 +119,7 @@ public class RequestService implements ServicesStruct<RequestModel> {
         try {
             RequestModel req = requestRepo.findById(requestId)
                     .orElseThrow(() -> new RuntimeException("Request not found"));
-            String photoPath = FileUploadUtil.saveUserFile("uploads/requests", req.getRecipientId(), photo,
+            String photoPath = FileUploadUtil.saveUserFile("uploads/requests", req.getId(), photo,
                     req.getTitle());
             req.setPhoto(photoPath);
             requestRepo.save(req);

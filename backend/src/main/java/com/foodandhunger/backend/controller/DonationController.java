@@ -17,34 +17,12 @@ public class DonationController implements ControllerStruct<DonationModel> {
     @Autowired
     private DonationService donationService;
 
-    //  Create donation with photo
-    @PostMapping(value = "/add", consumes = { "multipart/form-data" })
-    public ResponseEntity<String> createWithFile(
-            @RequestParam("donorId") int donorId,
-            @RequestParam("title") String title,
-            @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "type", required = false) String type,
-            @RequestParam(value = "photo", required = false) MultipartFile photo,
-            @RequestParam(value = "location", required = false) String location,
-            @RequestParam(value = "address", required = false) String address) {
-        try {
-            DonationModel donation = new DonationModel();
-            donation.setDonorId(donorId);
-            donation.setTitle(title);
-            donation.setDescription(description);
-            donation.setType(type);
-            donation.setLocation(location);
-            donation.setAddress(address);
-
-            if (photo != null)
-                donation.setPhoto(photo.getOriginalFilename());
-
-            boolean created = donationService.create(donation);
-            return created ? ResponseEntity.ok("Donation added successfully")
-                    : ResponseEntity.status(400).body("Failed to add donation");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+    @PostMapping("/add")
+    public ResponseEntity<String> create(@RequestBody DonationModel entity) {
+        if (!donationService.create(entity)) {
+            return ResponseEntity.status(400).body("Failed to add donation");
         }
+        return ResponseEntity.ok("Donation added successfully");
     }
 
     @GetMapping("/{id}")
