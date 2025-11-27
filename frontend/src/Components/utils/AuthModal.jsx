@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { X, Loader2, Mail, Lock, User } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
         username: '',
@@ -21,12 +21,11 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             ...formData,
             [e.target.name]: e.target.value
         });
-        setError('');
+
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
 
         try {
@@ -45,6 +44,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                     if (userData.username) localStorage.setItem('username', userData.username);
 
                     onLoginSuccess(userData);
+                    toast.success("Login successful!");
                     onClose();
                 }
             } else {
@@ -62,13 +62,14 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 if (response.data) {
                     // Auto login after signup or switch to login
                     setIsLogin(true);
-                    setError('');
-                    alert("Account created successfully! Please login.");
+                    setIsLogin(true);
+                    toast.success("Account created successfully! Please login.");
                 }
             }
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || err.message || "Authentication failed");
+            console.error(err);
+            toast.error(err.response?.data?.message || err.message || "Authentication failed");
         } finally {
             setLoading(false);
         }
@@ -111,11 +112,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                         </p>
                     </div>
 
-                    {error && (
-                        <div className="mb-6 p-3 bg-red-50 text-red-700 rounded-lg text-sm text-center">
-                            {error}
-                        </div>
-                    )}
+
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>

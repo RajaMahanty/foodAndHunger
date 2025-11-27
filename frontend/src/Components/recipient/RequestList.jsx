@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, MapPin } from 'lucide-react';
 import RequestForm from './RequestForm';
 
-const RequestList = ({ recipientId, axios }) => {
+import toast from 'react-hot-toast';
+
+const RequestList = ({ recipientId, axios, recipientProfile }) => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -41,6 +43,16 @@ const RequestList = ({ recipientId, axios }) => {
     };
 
     const handleAddNew = () => {
+        if (recipientProfile) {
+            if (!recipientProfile.photo) {
+                toast.error("Please upload your profile photo to add requests.");
+                return;
+            }
+            if (recipientProfile.organizationName && !recipientProfile.organizationCertificate) {
+                toast.error("Please upload your organization certificate to add requests.");
+                return;
+            }
+        }
         setEditingRequest(null);
         setIsFormOpen(true);
     };

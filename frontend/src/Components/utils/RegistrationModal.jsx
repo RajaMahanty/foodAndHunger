@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Upload, MapPin, Check, Loader2, User, Building2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -23,8 +24,8 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
     const [role, setRole] = useState('donor'); // 'donor' or 'recipient'
     const [loading, setLoading] = useState(false);
     const [registeredId, setRegisteredId] = useState(null);
-    const [error, setError] = useState('');
-    const [successMsg, setSuccessMsg] = useState('');
+
+
 
     // Form Data State
     const [formData, setFormData] = useState({
@@ -62,8 +63,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
             setRole('donor');
             setLoading(false);
             setRegisteredId(null);
-            setError('');
-            setSuccessMsg('');
+            setRegisteredId(null);
             setFormData({
                 name: '',
                 age: '',
@@ -141,12 +141,13 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                 },
                 (err) => {
                     console.error(err);
-                    setError("Unable to retrieve location.");
+                    console.error(err);
+                    toast.error("Unable to retrieve location.");
                     setLoading(false);
                 }
             );
         } else {
-            setError("Geolocation is not supported by this browser.");
+            toast.error("Geolocation is not supported by this browser.");
         }
     };
 
@@ -179,12 +180,11 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
 
         const userId = localStorage.getItem('userId');
         if (!userId) {
-            setError("User not logged in. Please login first.");
+            toast.error("User not logged in. Please login first.");
             setLoading(false);
             return;
         }
@@ -205,7 +205,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                 longitude: formData.longitude,
                 remarks: formData.remarks,
                 organization_certificate_id: formData.organization_certificate_id ? Number(formData.organization_certificate_id) : null,
-                concent: formData.consent
+                consent: formData.consent
             };
 
             const endpoint = role === 'donor' ? 'http://localhost:8080/api/donor/add' : 'http://localhost:8080/api/recipient/add';
@@ -223,12 +223,12 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                 }
 
                 setStep(2);
-                setSuccessMsg("Registration successful! Please upload documents.");
+                toast.success("Registration successful! Please upload documents.");
             }
         } catch (err) {
             console.error(err);
             const errorMsg = err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response?.data : "Registration failed. Please try again.");
-            setError(errorMsg);
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -236,7 +236,6 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
 
     const handleUpload = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
 
         try {
@@ -255,7 +254,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                 }
             });
 
-            setSuccessMsg("Documents uploaded successfully! Registration complete.");
+            toast.success("Documents uploaded successfully! Registration complete.");
 
             // Update Local Storage and Notify Parent
             localStorage.setItem('is_registered', 'true');
@@ -273,7 +272,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
         } catch (err) {
             console.error(err);
             const errorMsg = err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response?.data : "Upload failed. Please try again.");
-            setError(errorMsg);
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -326,17 +325,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                         </div>
                     )}
 
-                    {/* Error/Success Messages */}
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-                            {error}
-                        </div>
-                    )}
-                    {successMsg && (
-                        <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-                            {successMsg}
-                        </div>
-                    )}
+
 
                     {/* Step 1: Registration Form */}
                     {step === 1 && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { MapPin, Calendar, CheckCircle, AlertCircle, ArrowRight, Heart, Utensils, Clock, Navigation } from "lucide-react";
+import toast from 'react-hot-toast';
 import HomePageCrousel from "../utils/HomePageCrousel";
 import HomePageStates from "../utils/HomePageStates";
 
@@ -70,10 +71,10 @@ const Home = ({ publicAxiosInstance }) => {
             setDonations((prev) =>
                 prev.map((d) => (d.id === id ? { ...d, status: "approved" } : d))
             );
-            alert("Donation requested successfully!");
+            toast.success("Donation requested successfully!");
         } catch (error) {
             console.error("Error requesting donation:", error);
-            alert("Failed to request donation.");
+            toast.error("Failed to request donation.");
         }
     };
 

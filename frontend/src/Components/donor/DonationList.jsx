@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, MapPin, Calendar } from 'lucide-react';
 import DonationForm from './DonationForm';
 
-const DonationList = ({ donorId, axios }) => {
+import toast from 'react-hot-toast';
+
+const DonationList = ({ donorId, axios, donorProfile }) => {
     const [donations, setDonations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -41,6 +43,16 @@ const DonationList = ({ donorId, axios }) => {
     };
 
     const handleAddNew = () => {
+        if (donorProfile) {
+            if (!donorProfile.photo) {
+                toast.error("Please upload your profile photo to add donations.");
+                return;
+            }
+            if (donorProfile.organizationName && !donorProfile.organizationCertificate) {
+                toast.error("Please upload your organization certificate to add donations.");
+                return;
+            }
+        }
         setEditingDonation(null);
         setIsFormOpen(true);
     };
