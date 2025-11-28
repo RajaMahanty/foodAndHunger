@@ -100,10 +100,8 @@ const RequestFeed = ({ axios }) => {
                         className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                     >
                         <option value="all">All Types</option>
-                        <option value="Food">Food</option>
-                        <option value="Clothes">Clothes</option>
-                        <option value="Medical">Medical</option>
-                        <option value="Money">Money</option>
+                        <option value="Veg">Veg</option>
+                        <option value="Non-Veg">Non-Veg</option>
                     </select>
                 </div>
             </div>

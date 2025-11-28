@@ -7,11 +7,17 @@ import { Heart, List, User, AlertCircle } from 'lucide-react';
 
 const DDashboard = () => {
   const { publicAxiosInstance } = useOutletContext();
-  const [activeTab, setActiveTab] = useState('donations');
+  const [activeTab, setActiveTab] = useState('profile');
   const [donorId, setDonorId] = useState(null);
 
   const [donorProfile, setDonorProfile] = useState(null);
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
+
+  useEffect(() => {
+    if (donorProfile && donorProfile.status !== 'verified' && activeTab === 'donations') {
+      setActiveTab('profile');
+    }
+  }, [donorProfile, activeTab]);
 
   useEffect(() => {
     const storedRoleId = localStorage.getItem('roleId');
@@ -94,13 +100,22 @@ const DDashboard = () => {
           </div>
         )}
 
+        {isDocumentUploaded && donorProfile?.status !== 'verified' && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 text-yellow-700">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">
+              Your account is pending verification. You will be able to add donations once verified.
+            </p>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm p-2 mb-8 inline-flex gap-2">
           <button
-            onClick={() => isDocumentUploaded && setActiveTab('donations')}
-            disabled={!isDocumentUploaded}
+            onClick={() => isDocumentUploaded && donorProfile?.status === 'verified' && setActiveTab('donations')}
+            disabled={!isDocumentUploaded || donorProfile?.status !== 'verified'}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${activeTab === 'donations'
               ? 'bg-green-100 text-green-700 shadow-sm'
-              : isDocumentUploaded
+              : isDocumentUploaded && donorProfile?.status === 'verified'
                 ? 'text-gray-600 hover:bg-gray-50'
                 : 'text-gray-400 cursor-not-allowed opacity-60'
               }`}

@@ -18,11 +18,12 @@ public class RequestController implements ControllerStruct<RequestModel> {
     private RequestService requestService;
 
     @PostMapping("/add")
-    public ResponseEntity<String> create(@RequestBody RequestModel entity) {
-        if (!requestService.create(entity)) {
-            return ResponseEntity.status(400).body("Failed to add request (Recipient not found or duplicate)");
+    public ResponseEntity<RequestModel> create(@RequestBody RequestModel entity) {
+        RequestModel created = requestService.createReturnEntity(entity);
+        if (created == null) {
+            return ResponseEntity.status(400).build();
         }
-        return ResponseEntity.ok("Request added successfully");
+        return ResponseEntity.ok(created);
     }
 
     @GetMapping("/{id}")

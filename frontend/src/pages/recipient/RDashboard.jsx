@@ -7,11 +7,17 @@ import { List, User, Heart, AlertCircle } from 'lucide-react';
 
 const RDashboard = () => {
   const { publicAxiosInstance } = useOutletContext();
-  const [activeTab, setActiveTab] = useState('requests');
+  const [activeTab, setActiveTab] = useState('profile');
   const [recipientId, setRecipientId] = useState(null);
 
   const [recipientProfile, setRecipientProfile] = useState(null);
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
+
+  useEffect(() => {
+    if (recipientProfile && recipientProfile.status !== 'verified' && activeTab === 'requests') {
+      setActiveTab('profile');
+    }
+  }, [recipientProfile, activeTab]);
 
   useEffect(() => {
     const storedRoleId = localStorage.getItem('roleId');
@@ -94,13 +100,22 @@ const RDashboard = () => {
           </div>
         )}
 
+        {isDocumentUploaded && recipientProfile?.status !== 'verified' && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 text-yellow-700">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">
+              Your account is pending verification. You will be able to add requests once verified.
+            </p>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm p-2 mb-8 inline-flex gap-2">
           <button
-            onClick={() => isDocumentUploaded && setActiveTab('requests')}
-            disabled={!isDocumentUploaded}
+            onClick={() => isDocumentUploaded && recipientProfile?.status === 'verified' && setActiveTab('requests')}
+            disabled={!isDocumentUploaded || recipientProfile?.status !== 'verified'}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${activeTab === 'requests'
               ? 'bg-green-100 text-green-700 shadow-sm'
-              : isDocumentUploaded
+              : isDocumentUploaded && recipientProfile?.status === 'verified'
                 ? 'text-gray-600 hover:bg-gray-50'
                 : 'text-gray-400 cursor-not-allowed opacity-60'
               }`}

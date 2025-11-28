@@ -51,20 +51,23 @@ public class DonationService implements ServicesStruct<DonationModel> {
 
     @Override
     public boolean create(DonationModel entity) {
+        return createReturnEntity(entity) != null;
+    }
+
+    public DonationModel createReturnEntity(DonationModel entity) {
         try {
             boolean exists = donationRepo.existsByTitleAndDonorId(
                     entity.getTitle(), entity.getDonorId());
 
             if (exists) {
                 LLogging.warn("Duplicate donation ignored");
-                return false;
+                return null;
             }
 
-            donationRepo.save(entity);
-            return true;
+            return donationRepo.save(entity);
         } catch (Exception e) {
             LLogging.error("create failed: " + e.getMessage());
-            return false;
+            return null;
         }
     }
 

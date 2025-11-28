@@ -18,11 +18,12 @@ public class DonationController implements ControllerStruct<DonationModel> {
     private DonationService donationService;
 
     @PostMapping("/add")
-    public ResponseEntity<String> create(@RequestBody DonationModel entity) {
-        if (!donationService.create(entity)) {
-            return ResponseEntity.status(400).body("Failed to add donation");
+    public ResponseEntity<DonationModel> create(@RequestBody DonationModel entity) {
+        DonationModel created = donationService.createReturnEntity(entity);
+        if (created == null) {
+            return ResponseEntity.status(400).build();
         }
-        return ResponseEntity.ok("Donation added successfully");
+        return ResponseEntity.ok(created);
     }
 
     @GetMapping("/{id}")

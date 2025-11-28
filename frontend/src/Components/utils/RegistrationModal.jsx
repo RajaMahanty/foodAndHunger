@@ -278,6 +278,14 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
         }
     };
 
+    const handleClose = () => {
+        if (step === 2) {
+            window.location.reload();
+        } else {
+            onClose();
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -288,7 +296,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                     <h2 className="text-2xl font-bold text-gray-800">
                         {step === 1 ? "Registration" : "Upload Documents"}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <X className="w-6 h-6 text-gray-500" />
                     </button>
                 </div>

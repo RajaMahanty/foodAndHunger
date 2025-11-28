@@ -89,10 +89,16 @@ const RecipientProfile = ({ recipientId, axios, onUploadSuccess }) => {
             setProfile(res.data);
             setFiles({ photo: null, certificate: null, signature: null });
 
-            // Update localStorage and notify parent
-            localStorage.setItem('document_uploaded', 'true');
-            if (onUploadSuccess) {
-                onUploadSuccess();
+            // Check if all required documents are uploaded
+            const updatedProfile = res.data;
+            const isComplete = updatedProfile.photo && updatedProfile.signature &&
+                (!updatedProfile.organizationName || updatedProfile.organizationCertificate);
+
+            if (isComplete) {
+                localStorage.setItem('document_uploaded', 'true');
+                if (onUploadSuccess) {
+                    onUploadSuccess();
+                }
             }
         } catch (error) {
             console.error("Error uploading documents:", error);
@@ -102,8 +108,9 @@ const RecipientProfile = ({ recipientId, axios, onUploadSuccess }) => {
         }
     };
 
-    // Check if documents are already uploaded based on localStorage
-    const isDocumentUploaded = localStorage.getItem('document_uploaded') === 'true';
+    // Check if documents are already uploaded based on profile data
+    const isDocumentUploaded = profile && profile.photo && profile.signature &&
+        (!profile.organizationName || profile.organizationCertificate);
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">

@@ -113,7 +113,7 @@ const Navbar = () => {
         setMenuOpen(false);
     };
 
-    const navItems = ["Donors", "Recipients", "Volunteers"];
+    const navItems = ["Volunteers"];
 
     return (
         <>

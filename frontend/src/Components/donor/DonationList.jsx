@@ -44,6 +44,10 @@ const DonationList = ({ donorId, axios, donorProfile }) => {
 
     const handleAddNew = () => {
         if (donorProfile) {
+            if (donorProfile.status !== 'verified') {
+                toast.error("Your account must be verified to add donations.");
+                return;
+            }
             if (!donorProfile.photo) {
                 toast.error("Please upload your profile photo to add donations.");
                 return;

@@ -82,12 +82,17 @@ const DonorProfile = ({ donorId, axios, onUploadSuccess }) => {
             setProfile(res.data);
             setFiles({ photo: null, certificate: null, signature: null });
 
-            // As per requirements: if response is ok, save document_uploaded: true
-            localStorage.setItem('document_uploaded', 'true');
+            // Check if all required documents are uploaded
+            const updatedProfile = res.data;
+            const isComplete = updatedProfile.photo && updatedProfile.signature &&
+                (!updatedProfile.organizationName || updatedProfile.organizationCertificate);
 
-            // Notify parent to update dashboard state
-            if (onUploadSuccess) {
-                onUploadSuccess();
+            if (isComplete) {
+                localStorage.setItem('document_uploaded', 'true');
+                // Notify parent to update dashboard state only if complete
+                if (onUploadSuccess) {
+                    onUploadSuccess();
+                }
             }
         } catch (error) {
             console.error("Error uploading documents:", error);
@@ -100,8 +105,10 @@ const DonorProfile = ({ donorId, axios, onUploadSuccess }) => {
     if (loading) return <div className="text-center py-8">Loading profile...</div>;
     if (!profile) return <div className="text-center py-8 text-red-500">Failed to load profile.</div>;
 
-    // Check if documents are already uploaded based on profile data or localStorage
-    const isDocumentUploaded = localStorage.getItem('document_uploaded') === 'true';
+    // Check if documents are already uploaded based on profile data
+    // We prioritize profile data over localStorage to ensure accuracy
+    const isDocumentUploaded = profile.photo && profile.signature &&
+        (!profile.organizationName || profile.organizationCertificate);
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">

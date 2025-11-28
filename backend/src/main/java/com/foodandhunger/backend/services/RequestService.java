@@ -56,23 +56,26 @@ public class RequestService implements ServicesStruct<RequestModel> {
 
     @Override
     public boolean create(RequestModel entity) {
+        return createReturnEntity(entity) != null;
+    }
+
+    public RequestModel createReturnEntity(RequestModel entity) {
         try {
             if (!recipientRepo.existsById(entity.getRecipientId())) {
                 LLogging.warn("Recipient not found");
-                return false;
+                return null;
             }
 
             if (requestRepo.existsByRecipientIdAndTitle(entity.getRecipientId(), entity.getTitle())) {
                 LLogging.warn("Duplicate request ignored");
-                return false;
+                return null;
             }
 
-            requestRepo.save(entity);
-            return true;
+            return requestRepo.save(entity);
 
         } catch (Exception e) {
             LLogging.error("create failed: " + e.getMessage());
-            return false;
+            return null;
         }
     }
 

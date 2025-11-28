@@ -44,6 +44,10 @@ const RequestList = ({ recipientId, axios, recipientProfile }) => {
 
     const handleAddNew = () => {
         if (recipientProfile) {
+            if (recipientProfile.status !== 'verified') {
+                toast.error("Your account must be verified to add requests.");
+                return;
+            }
             if (!recipientProfile.photo) {
                 toast.error("Please upload your profile photo to add requests.");
                 return;
