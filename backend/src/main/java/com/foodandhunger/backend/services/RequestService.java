@@ -45,6 +45,8 @@ public class RequestService implements ServicesStruct<RequestModel> {
             existing.setAmount(entity.getAmount());
             existing.setAddress(entity.getAddress());
             existing.setLocation(entity.getLocation());
+            existing.setLatitude(entity.getLatitude());
+            existing.setLongitude(entity.getLongitude());
             existing.setStatus(entity.getStatus());
             requestRepo.save(existing);
             return true;
@@ -66,10 +68,11 @@ public class RequestService implements ServicesStruct<RequestModel> {
                 return null;
             }
 
-            if (requestRepo.existsByRecipientIdAndTitle(entity.getRecipientId(), entity.getTitle())) {
-                LLogging.warn("Duplicate request ignored");
-                return null;
-            }
+            // Removed duplicate check to allow multiple requests with same title
+            // if (requestRepo.existsByRecipientIdAndTitle(entity.getRecipientId(), entity.getTitle())) {
+            //     LLogging.warn("Duplicate request ignored");
+            //     return null;
+            // }
 
             return requestRepo.save(entity);
 
