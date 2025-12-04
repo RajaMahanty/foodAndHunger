@@ -31,3 +31,14 @@ node_modules/*
 
 
 .history
+
+./.history
+.history/*
+
+.vscode/*
+.vscode
+
+/.history
+
+.vscode/
+.history/
