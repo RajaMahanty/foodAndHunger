@@ -113,13 +113,18 @@ const RecipientProfile = ({ recipientId, axios, onUploadSuccess }) => {
         (!profile.organizationName || profile.organizationCertificate);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            <div className="bg-white rounded-2xl overflow-hidden border shadow-sm">
-                <div className="h-32 bg-gradient-to-r from-green-400 to-green-600"></div>
+        <div className="max-w-5xl mx-auto space-y-8">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300">
+                <div className="h-48 bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-black opacity-10"></div>
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                    }}></div>
+                </div>
                 <div className="px-8 pb-8">
-                    <div className="relative flex justify-between items-end -mt-12 mb-6">
-                        <div className="relative">
-                            <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-gray-100">
+                    <div className="relative flex justify-between items-end -mt-16 mb-6">
+                        <div className="relative group">
+                            <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
                                 {profile.photo ? (
                                     <img
                                         src={`http://localhost:8080${profile.photo}`}
@@ -128,23 +133,27 @@ const RecipientProfile = ({ recipientId, axios, onUploadSuccess }) => {
                                         onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=User'; }}
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                        <User className="w-10 h-10" />
+                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-100 to-cyan-100">
+                                        <User className="w-14 h-14 text-teal-400" />
                                     </div>
+                                )}
+                            </div>
+                            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform duration-300">
+                                {profile.status === 'verified' || profile.status === 'approved' ? (
+                                    <CheckCircle className="w-6 h-6 text-white" />
+                                ) : (
+                                    <XCircle className="w-6 h-6 text-white" />
                                 )}
                             </div>
                         </div>
                         <div className="mb-1 flex items-center gap-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${profile.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                profile.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                    'bg-yellow-100 text-yellow-700'
-                                }`}>
-                                {profile.status ? profile.status.toUpperCase() : 'PENDING'}
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                {profile.status || 'PENDING'}
                             </span>
                             {!isEditing && (
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                                    className="px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-md text-sm font-medium shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-teal-600 transform hover:scale-105 transition-all duration-200"
                                 >
                                     Edit Profile
                                 </button>
@@ -266,10 +275,10 @@ const RecipientProfile = ({ recipientId, axios, onUploadSuccess }) => {
                                         <MapPin className="w-5 h-5 text-gray-400" />
                                         <span>{profile.address}</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-gray-600">
+                                    {/* <div className="flex items-center gap-3 text-gray-600">
                                         <Building className="w-5 h-5 text-gray-400" />
                                         <span>{profile.organizationType}</span>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
@@ -399,7 +408,6 @@ const RecipientProfile = ({ recipientId, axios, onUploadSuccess }) => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="flex justify-end">
                             <button
                                 type="submit"

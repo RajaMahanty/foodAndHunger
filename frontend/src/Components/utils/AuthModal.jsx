@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { X, Loader2, Mail, Lock, User } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -6,6 +7,7 @@ import toast from 'react-hot-toast';
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         username: '',
@@ -21,7 +23,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             ...formData,
             [e.target.name]: e.target.value
         });
-
     };
 
     const handleSubmit = async (e) => {
@@ -32,7 +33,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             if (isLogin) {
                 // Login Logic
                 const response = await axios.post('http://localhost:8080/api/auth/user/login', {
-                    username: formData.username, // Using username field for login identifier
+                    username: formData.username,
                     password: formData.password
                 });
 
@@ -43,33 +44,71 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                     localStorage.setItem('logged_in', 'true');
                     if (userData.username) localStorage.setItem('username', userData.username);
 
-                    onLoginSuccess(userData);
                     toast.success("Login successful!");
+                    
                     onClose();
+                    
+                    if (onLoginSuccess) {
+                        onLoginSuccess(userData);
+                    }
+                    
+                    // Redirect to home page and reload to update navbar
+                    window.location.href = '/';
                 }
             } else {
                 // Signup Logic
                 if (formData.password !== formData.confirmPassword) {
-                    throw new Error("Passwords do not match");
+                    toast.error("Passwords do not match");
+                    setLoading(false);
+                    return;
                 }
 
-                const response = await axios.post('http://localhost:8080/api/auth/user/signup', {
-                    username: formData.username,
-                    email: formData.email,
+                // Validate all fields are filled
+                if (!formData.username || !formData.email || !formData.password) {
+                    toast.error("Please fill in all fields");
+                    setLoading(false);
+                    return;
+                }
+
+                const payload = {
+                    username: formData.username.trim(),
+                    email: formData.email.trim(),
                     password: formData.password
-                });
+                };
+
+                console.log("Signup payload:", payload);
+
+                const response = await axios.post('http://localhost:8080/api/auth/user/signup', payload);
+
+                console.log("Signup response:", response);
 
                 if (response.data) {
                     // Auto login after signup or switch to login
-                    setIsLogin(true);
+                    setFormData({
+                        username: '',
+                        email: '',
+                        password: '',
+                        confirmPassword: ''
+                    });
                     setIsLogin(true);
                     toast.success("Account created successfully! Please login.");
                 }
             }
         } catch (err) {
-            console.error(err);
-            console.error(err);
-            toast.error(err.response?.data?.message || err.message || "Authentication failed");
+            console.error("Auth error:", err);
+            console.error("Auth error response:", err.response);
+            
+            let errorMessage = "Authentication failed";
+            if (err.response?.data) {
+                // Backend returns plain string error messages
+                errorMessage = typeof err.response.data === 'string' 
+                    ? err.response.data 
+                    : err.response.data.message || errorMessage;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -111,8 +150,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                             {isLogin ? 'Please sign in to continue' : 'Join us to make a difference'}
                         </p>
                     </div>
-
-
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>

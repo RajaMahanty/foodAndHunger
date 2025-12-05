@@ -1,5 +1,6 @@
 {
     "workbench.activityBar.location": "default",
     "workbench.panel.defaultLocation": "bottom",
-    "workbench.panel.opensMaximized": "preserve"
+    "workbench.panel.opensMaximized": "preserve",
+    "java.compile.nullAnalysis.mode": "disabled"
 }
