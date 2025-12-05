@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { MapPin, Calendar, CheckCircle, AlertCircle, ArrowRight, Heart, Utensils, Clock, Navigation, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
+import { MapPin, Calendar, CheckCircle, AlertCircle, ArrowRight, Heart, Utensils, Clock, Navigation, ChevronLeft, ChevronRight, Plus, Minus, Package, Eye, X, User } from "lucide-react";
 import AuthModal from "../utils/AuthModal";
 import toast from 'react-hot-toast';
 import HomePageCrousel from "../utils/HomePageCrousel";
@@ -17,6 +17,12 @@ const Home = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [faqOpen, setFaqOpen] = useState(null);
+    const [isVolunteer, setIsVolunteer] = useState(false);
+    const [viewDetailsModal, setViewDetailsModal] = useState(null);
+    const [donationDetailsModal, setDonationDetailsModal] = useState(null);
+    const [requestDetailsModal, setRequestDetailsModal] = useState(null);
+    const [userRole, setUserRole] = useState(null);
+    const [requestedDonations, setRequestedDonations] = useState(new Set());
     const itemsPerPage = 6;
 
     const faqs = [
@@ -39,6 +45,11 @@ const Home = () => {
     ];
 
     useEffect(() => {
+        // Check if user is a volunteer
+        const role = localStorage.getItem('role');
+        setUserRole(role);
+        setIsVolunteer(role === 'volunteer');
+        
         const fetchData = async () => {
             if (!publicAxiosInstance) {
                 console.error("publicAxiosInstance is undefined");
@@ -53,14 +64,14 @@ const Home = () => {
                 console.log("Donations:", donationsRes.data);
                 console.log("Requests:", requestsRes.data);
                 
-                // Filter only admin-approved donations
+                // Filter only admin-approved donations and requested ones (for recipients to see their requests)
                 const approvedDonations = donationsRes.data.filter(donation => 
-                    donation.approved === true || donation.status === 'approved'
+                    donation.approved === true || donation.status === 'approved' || donation.status === 'requested'
                 );
                 
                 // Filter only admin-approved requests
                 const approvedRequests = requestsRes.data.filter(request => 
-                    request.approved === true || request.status === 'approved'
+                    request.approved === true || request.status === 'approved' || request.status === 'requested'
                 );
                 
                 setDonations(approvedDonations);
@@ -105,15 +116,27 @@ const Home = () => {
             const donationToUpdate = donations.find(d => d.id === id);
             if (!donationToUpdate) return;
 
-            const updatedDonation = { ...donationToUpdate, status: "approved", remarks: "Verified" };
+            const updatedDonation = { ...donationToUpdate, status: "requested", remarks: "Requested by recipient" };
 
             await publicAxiosInstance.put(`/donation/update/${id}`, updatedDonation);
 
-            // Update local state to reflect change
+            // Notify volunteers about the new pickup
+            try {
+                await publicAxiosInstance.post('/volunteer/notify', {
+                    donationId: id,
+                    message: `New donation requested: ${donationToUpdate.title || donationToUpdate.foodType}`,
+                    location: donationToUpdate.address
+                });
+            } catch (notifyError) {
+                console.warn("Failed to notify volunteers:", notifyError);
+            }
+
+            // Update local state to reflect the status change
             setDonations((prev) =>
-                prev.map((d) => (d.id === id ? { ...d, status: "approved" } : d))
+                prev.map((d) => (d.id === id ? { ...d, status: "requested" } : d))
             );
-            toast.success("Donation requested successfully!");
+            
+            toast.success("Donation requested successfully! Volunteers have been notified.");
         } catch (error) {
             console.error("Error requesting donation:", error);
             toast.error("Failed to request donation.");
@@ -129,15 +152,84 @@ const Home = () => {
         toast.success("Please go to your dashboard to donate.");
     };
 
+    const handleDonateToRequest = async (requestId) => {
+        try {
+            const requestToUpdate = requests.find(r => r.id === requestId);
+            if (!requestToUpdate) return;
+
+            const updatedRequest = { ...requestToUpdate, status: "requested", remarks: "Donated by donor" };
+
+            await publicAxiosInstance.put(`/request/update/${requestId}`, updatedRequest);
+
+            // Notify volunteers about the new pickup
+            try {
+                await publicAxiosInstance.post('/volunteer/notify', {
+                    requestId: requestId,
+                    message: `New request donated: ${requestToUpdate.title}`,
+                    location: requestToUpdate.address || requestToUpdate.location
+                });
+            } catch (notifyError) {
+                console.warn("Failed to notify volunteers:", notifyError);
+            }
+
+            // Update local state
+            setRequests((prev) =>
+                prev.map((r) => (r.id === requestId ? { ...r, status: "requested" } : r))
+            );
+            
+            toast.success("Thank you for donating! Volunteers have been notified.");
+            setRequestDetailsModal(null);
+        } catch (error) {
+            console.error("Error donating to request:", error);
+            toast.error("Failed to process donation.");
+        }
+    };
+
     const toggleFaq = (index) => {
         setFaqOpen(faqOpen === index ? null : index);
+    };
+
+    const handleAcceptDelivery = async (item) => {
+        if (!confirm("Are you sure you want to accept this delivery?")) return;
+
+        try {
+            const volunteerId = localStorage.getItem('roleId');
+            const volunteerName = localStorage.getItem('username') || "Volunteer";
+            const isDonation = item.donorId !== undefined;
+
+            if (isDonation) {
+                // Update donation status
+                await publicAxiosInstance.patch(`/donation/${item.id}/status`, null, {
+                    params: {
+                        status: 'out_for_delivery',
+                        remarks: `Accepted by ${volunteerName} (ID: ${volunteerId})`
+                    }
+                });
+            } else {
+                // Update request status
+                const updatedRequest = { ...item, status: 'out_for_delivery' };
+                await publicAxiosInstance.put(`/request/update/${item.id}`, updatedRequest);
+            }
+
+            toast.success("Delivery accepted! Status updated to 'Out for Delivery'.");
+            setViewDetailsModal(null);
+            // Refresh data
+            window.location.reload();
+        } catch (error) {
+            console.error("Error accepting delivery:", error);
+            toast.error("Failed to accept delivery");
+        }
     };
 
     // Pagination Logic
     const sortedDonations = [...donations].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const sortedRequests = [...requests].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    const currentItems = activeTab === 'donations' ? sortedDonations : sortedRequests;
+    // For volunteers, combine approved donations and requests
+    const currentItems = isVolunteer 
+        ? [...sortedDonations, ...sortedRequests].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        : (activeTab === 'donations' ? sortedDonations : sortedRequests);
+    
     const totalPages = Math.ceil(currentItems.length / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -170,38 +262,45 @@ const Home = () => {
 
             <div className="max-w-7xl mx-auto px-4 py-8 space-y-16">
 
-                {/* Tabs */}
-                <div className="flex justify-center mb-8">
-                    <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-100 inline-flex">
-                        <button
-                            onClick={() => { setActiveTab('donations'); setCurrentPage(1); }}
-                            className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center gap-2 ${activeTab === 'donations'
-                                ? 'bg-green-600 text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            <Heart className={`w-4 h-4 ${activeTab === 'donations' ? 'fill-white' : ''}`} />
-                            Donations
-                        </button>
-                        <button
-                            onClick={() => { setActiveTab('requests'); setCurrentPage(1); }}
-                            className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center gap-2 ${activeTab === 'requests'
-                                ? 'bg-orange-500 text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            <Utensils className={`w-4 h-4 ${activeTab === 'requests' ? 'fill-white' : ''}`} />
-                            Requests
-                        </button>
+                {/* Tabs - Only show for non-volunteers */}
+                {!isVolunteer && (
+                    <div className="flex justify-center mb-8">
+                        <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-100 inline-flex">
+                            <button
+                                onClick={() => { setActiveTab('donations'); setCurrentPage(1); }}
+                                className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center gap-2 ${activeTab === 'donations'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <Heart className={`w-4 h-4 ${activeTab === 'donations' ? 'fill-white' : ''}`} />
+                                Donations
+                            </button>
+                            <button
+                                onClick={() => { setActiveTab('requests'); setCurrentPage(1); }}
+                                className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center gap-2 ${activeTab === 'requests'
+                                    ? 'bg-orange-500 text-white shadow-md'
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <Utensils className={`w-4 h-4 ${activeTab === 'requests' ? 'fill-white' : ''}`} />
+                                Requests
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Content Section */}
                 <section>
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-                                {activeTab === 'donations' ? (
+                                {isVolunteer ? (
+                                    <>
+                                        <Navigation className="text-blue-600" />
+                                        Available for Pickups
+                                    </>
+                                ) : activeTab === 'donations' ? (
                                     <>
                                         <Heart className="text-green-600 fill-green-600" />
                                         Available Donations
@@ -214,15 +313,77 @@ const Home = () => {
                                 )}
                             </h2>
                             <p className="text-gray-600 mt-2">
-                                {activeTab === 'donations'
-                                    ? "Fresh food available for pickup right now"
-                                    : "Urgent requests from communities in need"}
+                                {isVolunteer
+                                    ? "Approved donations and requests ready for pickup and delivery"
+                                    : activeTab === 'donations'
+                                        ? "Fresh food available for pickup right now"
+                                        : "Urgent requests from communities in need"}
                             </p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {activeTab === 'donations' ? (
+                        {isVolunteer ? (
+                            // Volunteer view - show both donations and requests (matching VDashboard style)
+                            currentItemsSlice.map((item) => {
+                                const isDonation = item.donorId !== undefined;
+                                return (
+                                    <div key={`${isDonation ? 'donation' : 'request'}-${item.id}`} className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                                        <div className="h-48 bg-gray-200 relative">
+                                            {item.photo ? (
+                                                <img
+                                                    src={`http://localhost:8080${item.photo}`}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/400x300?text=No+Image'; }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                    <Package className="w-12 h-12" />
+                                                </div>
+                                            )}
+                                            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">
+                                                {isDonation ? 'donation' : 'request'}
+                                            </div>
+                                        </div>
+
+                                        <div className="p-6 flex-1 flex flex-col">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{item.title}</h3>
+                                                <span className={`px-2 py-1 rounded text-xs font-medium uppercase ${item.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                    item.status === 'out_for_delivery' ? 'bg-blue-100 text-blue-800' :
+                                                        item.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                                                            'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                    {item.status}
+                                                </span>
+                                            </div>
+
+                                            <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{item.description}</p>
+
+                                            <div className="space-y-2 text-sm text-gray-500 mb-6">
+                                                <div className="flex items-start gap-2">
+                                                    <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+                                                    <span className="line-clamp-2">{item.address || item.location || "Address Available"}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="w-4 h-4 shrink-0" />
+                                                    <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => setViewDetailsModal(item)}
+                                                className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Eye className="w-5 h-5" />
+                                                View Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : activeTab === 'donations' ? (
                             currentItemsSlice.map((donation) => (
                                 <div key={donation.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-green-100 group">
                                     <div className="relative h-48 overflow-hidden">
@@ -269,22 +430,31 @@ const Home = () => {
                                         </div>
 
                                         <div className="pt-4 flex gap-3 border-t border-gray-100">
-                                            <button
-                                                onClick={() => handleRequestDonation(donation.id)}
-                                                disabled={donation.status === 'approved'}
-                                                className={`flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${donation.status === 'approved'
-                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    : 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20'
-                                                    }`}
-                                            >
-                                                {donation.status === 'approved' ? (
-                                                    <>
-                                                        <CheckCircle className="w-4 h-4" /> Requested
-                                                    </>
-                                                ) : (
-                                                    'Request Donation'
-                                                )}
-                                            </button>
+                                            {userRole === 'recipient' ? (
+                                                <button
+                                                    onClick={() => handleRequestDonation(donation.id)}
+                                                    disabled={donation.status === 'requested'}
+                                                    className={`flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${donation.status === 'requested'
+                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        : 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20'
+                                                        }`}
+                                                >
+                                                    {donation.status === 'requested' ? (
+                                                        <>
+                                                            <CheckCircle className="w-4 h-4" /> Requested
+                                                        </>
+                                                    ) : (
+                                                        'Request Donation'
+                                                    )}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setDonationDetailsModal(donation)}
+                                                    className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20"
+                                                >
+                                                    <Eye className="w-4 h-4" /> View Details
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => openLiveLocation(donation.latitude, donation.longitude, donation.address)}
                                                 className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition-colors border border-green-200"
@@ -348,12 +518,32 @@ const Home = () => {
                                         </div>
 
                                         <div className="pt-4 flex gap-3 border-t border-gray-100">
-                                            <button
-                                                onClick={handleDonateClick}
-                                                className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all duration-200 flex items-center justify-center gap-2"
-                                            >
-                                                Donate Now
-                                            </button>
+                                            {userRole === 'donor' ? (
+                                                <button
+                                                    onClick={() => setRequestDetailsModal(request)}
+                                                    disabled={request.status === 'requested'}
+                                                    className={`flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                                                        request.status === 'requested'
+                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                            : 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20'
+                                                    }`}
+                                                >
+                                                    {request.status === 'requested' ? (
+                                                        <>
+                                                            <CheckCircle className="w-4 h-4" /> Donated
+                                                        </>
+                                                    ) : (
+                                                        'Donate Now'
+                                                    )}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setRequestDetailsModal(request)}
+                                                    className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20"
+                                                >
+                                                    <Eye className="w-4 h-4" /> View Details
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => openLiveLocation(request.latitude, request.longitude, request.address)}
                                                 className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors border border-orange-200"
@@ -423,12 +613,346 @@ const Home = () => {
                 </section>
             </div>
 
+            {/* View Details Modal for Volunteers */}
+            {viewDetailsModal && (
+                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-gray-800">Pickup Details</h2>
+                            <button
+                                onClick={() => setViewDetailsModal(null)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-gray-600" />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6">
+                            {/* Image */}
+                            <div className="mb-6 rounded-xl overflow-hidden bg-gray-100">
+                                {viewDetailsModal.photo ? (
+                                    <img
+                                        src={`http://localhost:8080/uploads/${viewDetailsModal.donorId ? 'donations' : 'requests'}/${viewDetailsModal.id}/${viewDetailsModal.photo}`}
+                                        alt={viewDetailsModal.title || viewDetailsModal.foodType}
+                                        className="w-full h-64 object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-64 flex items-center justify-center">
+                                        <User className="w-24 h-24 text-gray-400" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="space-y-4">
+                                {/* Type Badge */}
+                                <div className="flex gap-2">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${viewDetailsModal.donorId ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                                        {viewDetailsModal.donorId ? 'Donation' : 'Request'}
+                                    </span>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${viewDetailsModal.status === 'available' ? 'bg-green-100 text-green-700' :
+                                            viewDetailsModal.status === 'out_for_delivery' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-gray-100 text-gray-700'
+                                        }`}>
+                                        {viewDetailsModal.status?.replace('_', ' ').toUpperCase() || 'AVAILABLE'}
+                                    </span>
+                                </div>
+
+                                {/* Title */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Title</h3>
+                                    <p className="text-lg font-bold text-gray-800">{viewDetailsModal.title || viewDetailsModal.foodType}</p>
+                                </div>
+
+                                {/* Description */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Description</h3>
+                                    <p className="text-gray-700">{viewDetailsModal.description}</p>
+                                </div>
+
+                                {/* Location */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Location</h3>
+                                    <div className="flex items-start gap-2 text-gray-700">
+                                        <MapPin className="w-5 h-5 shrink-0 mt-0.5 text-green-600" />
+                                        <span>{viewDetailsModal.address || viewDetailsModal.location || "Address Available"}</span>
+                                    </div>
+                                </div>
+
+                                {/* Date */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Created On</h3>
+                                    <div className="flex items-center gap-2 text-gray-700">
+                                        <Clock className="w-5 h-5 text-green-600" />
+                                        <span>{new Date(viewDetailsModal.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+                                <button
+                                    onClick={() => openLiveLocation(viewDetailsModal.latitude, viewDetailsModal.longitude, viewDetailsModal.address || viewDetailsModal.location)}
+                                    className="py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <MapPin className="w-5 h-5" />
+                                    View Location
+                                </button>
+                                <button
+                                    onClick={() => handleAcceptDelivery(viewDetailsModal)}
+                                    className="py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <CheckCircle className="w-5 h-5" />
+                                    Accept Delivery
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Donation Details Modal for Donors/Volunteers */}
+            {donationDetailsModal && (
+                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-gray-800">Donation Details</h2>
+                            <button
+                                onClick={() => setDonationDetailsModal(null)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-gray-600" />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6">
+                            {/* Image */}
+                            <div className="mb-6 rounded-xl overflow-hidden bg-gray-100">
+                                {donationDetailsModal.photo ? (
+                                    <img
+                                        src={`http://localhost:8080/uploads/donations/${donationDetailsModal.id}/${donationDetailsModal.photo}`}
+                                        alt={donationDetailsModal.title || donationDetailsModal.foodType}
+                                        className="w-full h-64 object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-64 flex items-center justify-center">
+                                        <Package className="w-24 h-24 text-gray-400" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="space-y-4">
+                                {/* Status Badge */}
+                                <div className="flex gap-2">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                        donationDetailsModal.status === 'available' ? 'bg-green-100 text-green-700' :
+                                        donationDetailsModal.status === 'approved' ? 'bg-blue-100 text-blue-700' :
+                                        donationDetailsModal.status === 'out_for_delivery' ? 'bg-yellow-100 text-yellow-700' :
+                                        'bg-gray-100 text-gray-700'
+                                    }`}>
+                                        {donationDetailsModal.status?.replace('_', ' ').toUpperCase() || 'AVAILABLE'}
+                                    </span>
+                                </div>
+
+                                {/* Title */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Title</h3>
+                                    <p className="text-lg font-bold text-gray-800">{donationDetailsModal.title || donationDetailsModal.foodType}</p>
+                                </div>
+
+                                {/* Description */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Description</h3>
+                                    <p className="text-gray-700">{donationDetailsModal.description}</p>
+                                </div>
+
+                                {/* Food Type */}
+                                {donationDetailsModal.foodType && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">Food Type</h3>
+                                        <p className="text-gray-700">{donationDetailsModal.foodType}</p>
+                                    </div>
+                                )}
+
+                                {/* Quantity */}
+                                {donationDetailsModal.quantity && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">Quantity</h3>
+                                        <p className="text-gray-700">{donationDetailsModal.quantity}</p>
+                                    </div>
+                                )}
+
+                                {/* Location */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Location</h3>
+                                    <div className="flex items-start gap-2 text-gray-700">
+                                        <MapPin className="w-5 h-5 shrink-0 mt-0.5 text-green-600" />
+                                        <span>{donationDetailsModal.address || "Address Available"}</span>
+                                    </div>
+                                </div>
+
+                                {/* Date */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Created On</h3>
+                                    <div className="flex items-center gap-2 text-gray-700">
+                                        <Clock className="w-5 h-5 text-green-600" />
+                                        <span>{new Date(donationDetailsModal.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Button */}
+                            <div className="mt-6 pt-6 border-t">
+                                <button
+                                    onClick={() => openLiveLocation(donationDetailsModal.latitude, donationDetailsModal.longitude, donationDetailsModal.address)}
+                                    className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <MapPin className="w-5 h-5" />
+                                    View Location
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Request Details Modal */}
+            {requestDetailsModal && (
+                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-gray-800">Request Details</h2>
+                            <button
+                                onClick={() => setRequestDetailsModal(null)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-gray-600" />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6">
+                            {/* Image */}
+                            <div className="mb-6 rounded-xl overflow-hidden bg-gray-100">
+                                {requestDetailsModal.photo ? (
+                                    <img
+                                        src={`http://localhost:8080${requestDetailsModal.photo}`}
+                                        alt={requestDetailsModal.title}
+                                        className="w-full h-64 object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-64 flex items-center justify-center">
+                                        <Package className="w-24 h-24 text-gray-400" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="space-y-4">
+                                {/* Status Badge */}
+                                <div className="flex gap-2">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                        requestDetailsModal.status?.toLowerCase() === 'urgent' ? 'bg-red-100 text-red-700' :
+                                        requestDetailsModal.status === 'requested' ? 'bg-blue-100 text-blue-700' :
+                                        'bg-orange-100 text-orange-700'
+                                    }`}>
+                                        {requestDetailsModal.status?.toUpperCase() || 'URGENT'}
+                                    </span>
+                                    {requestDetailsModal.amount && (
+                                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                            {requestDetailsModal.amount} People
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Title */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Title</h3>
+                                    <p className="text-lg font-bold text-gray-800">{requestDetailsModal.title}</p>
+                                </div>
+
+                                {/* Description */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Description</h3>
+                                    <p className="text-gray-700">{requestDetailsModal.description}</p>
+                                </div>
+
+                                {/* Amount */}
+                                {requestDetailsModal.amount && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">Number of People</h3>
+                                        <p className="text-gray-700">{requestDetailsModal.amount}</p>
+                                    </div>
+                                )}
+
+                                {/* Location */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Location</h3>
+                                    <div className="flex items-start gap-2 text-gray-700">
+                                        <MapPin className="w-5 h-5 shrink-0 mt-0.5 text-orange-600" />
+                                        <span>{requestDetailsModal.address || "Address Available"}</span>
+                                    </div>
+                                </div>
+
+                                {/* Date */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">Requested On</h3>
+                                    <div className="flex items-center gap-2 text-gray-700">
+                                        <Clock className="w-5 h-5 text-orange-600" />
+                                        <span>{new Date(requestDetailsModal.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Button */}
+                            <div className="mt-6 pt-6 border-t">
+                                {userRole === 'donor' ? (
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => openLiveLocation(requestDetailsModal.latitude, requestDetailsModal.longitude, requestDetailsModal.address)}
+                                            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <MapPin className="w-5 h-5" />
+                                            View Location
+                                        </button>
+                                        <button
+                                            onClick={() => handleDonateToRequest(requestDetailsModal.id)}
+                                            className="flex-1 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Heart className="w-5 h-5" />
+                                            Donate Now
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => openLiveLocation(requestDetailsModal.latitude, requestDetailsModal.longitude, requestDetailsModal.address)}
+                                        className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <MapPin className="w-5 h-5" />
+                                        View Location
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <AuthModal
                 isOpen={showAuthModal}
                 onClose={() => setShowAuthModal(false)}
                 onLoginSuccess={() => {
                     setShowAuthModal(false);
-                    // Optionally refresh data or state
+                    // Update user role after login
+                    const role = localStorage.getItem('role');
+                    setUserRole(role);
+                    setIsVolunteer(role === 'volunteer');
                 }}
             />
         </div>
@@ -436,58 +960,3 @@ const Home = () => {
 };
 
 export default Home;
-
-// (
-//                             currentItemsSlice.map((request) => (
-//                                 <div key={request.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-orange-100 group">
-//                                     <div className="p-5 space-y-4">
-//                                         <div>
-//                                             <div className="flex justify-between items-start mb-1">
-//                                                 <h3 className="text-xl font-bold text-gray-800">{request.title}</h3>
-//                                                 <span className="text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
-//                                                     {request.amount ? `${request.amount} People` : 'Any Amount'}
-//                                                 </span>
-//                                             </div>
-//                                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium shadow-sm mb-2 ${request.status?.toLowerCase() === 'urgent'
-//                                                 ? 'bg-red-500 text-white animate-pulse'
-//                                                 : 'bg-orange-500 text-white'
-//                                                 }`}>
-//                                                 {request.status || 'Urgent'}
-//                                             </span>
-//                                             <p className="text-gray-500 text-sm line-clamp-2">{request.description}</p>
-//                                         </div>
-
-//                                         <div className="space-y-2 text-sm text-gray-600">
-//                                             <div className="flex items-start gap-2">
-//                                                 <MapPin className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
-//                                                 <span className="line-clamp-1">{request.address || "Address Available"}</span>
-//                                             </div>
-//                                             <div className="flex items-center gap-2">
-//                                                 <Calendar className="w-4 h-4 text-orange-500 shrink-0" />
-//                                                 <span>{formatDate(request.createdAt)}</span>
-//                                             </div>
-//                                             <div className="flex items-center gap-2">
-//                                                 <AlertCircle className="w-4 h-4 text-orange-500 shrink-0" />
-//                                                 <span>Status: {request.status || "Urgent"}</span>
-//                                             </div>
-//                                         </div>
-
-//                                         <div className="pt-4 flex gap-3 border-t border-gray-100">
-//                                             <button
-//                                                 onClick={handleDonateClick}
-//                                                 className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all duration-200 flex items-center justify-center gap-2"
-//                                             >
-//                                                 Donate Now
-//                                             </button>
-//                                             <button
-//                                                 onClick={() => openLiveLocation(request.latitude, request.longitude, request.address)}
-//                                                 className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors border border-orange-200"
-//                                                 title="Track Location"
-//                                             >
-//                                                 <Navigation className="w-5 h-5" />
-//                                             </button>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             ))
-//                         )

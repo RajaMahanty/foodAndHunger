@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Calendar, User } from 'lucide-react';
+import { MapPin, Calendar, User, Eye, X, Clock, AlertCircle, Utensils, Package, Heart, Navigation, CheckCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const RequestFeed = ({ axios }) => {
     const [requests, setRequests] = useState([]);
@@ -7,6 +8,14 @@ const RequestFeed = ({ axios }) => {
     const [filter, setFilter] = useState('all'); // 'all', 'food', 'medical', etc.
     const [userLocation, setUserLocation] = useState(null);
     const [sortByDistance, setSortByDistance] = useState(false);
+    const [viewDetailsModal, setViewDetailsModal] = useState(null);
+    const [donatedRequests, setDonatedRequests] = useState(new Set());
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
 
     // Haversine formula to calculate distance in km
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -52,15 +61,49 @@ const RequestFeed = ({ axios }) => {
         }
     };
 
+    const handleDonateRequest = async (requestId) => {
+        try {
+            const requestToUpdate = requests.find(r => r.id === requestId);
+            if (!requestToUpdate) return;
+
+            const updatedRequest = { ...requestToUpdate, status: "requested", remarks: "Donated by donor" };
+
+            await axios.put(`/request/update/${requestId}`, updatedRequest);
+
+            // Notify volunteers about the new pickup
+            try {
+                await axios.post('/volunteer/notify', {
+                    requestId: requestId,
+                    message: `New request donated: ${requestToUpdate.title}`,
+                    location: requestToUpdate.address || requestToUpdate.location
+                });
+            } catch (notifyError) {
+                console.warn("Failed to notify volunteers:", notifyError);
+            }
+
+            // Update local state
+            setDonatedRequests((prev) => new Set(prev).add(requestId));
+            setRequests((prev) =>
+                prev.map((r) => (r.id === requestId ? { ...r, status: "requested" } : r))
+            );
+            
+            toast.success("Thank you for donating! Volunteers have been notified.");
+            setViewDetailsModal(null);
+        } catch (error) {
+            console.error("Error donating to request:", error);
+            toast.error("Failed to process donation.");
+        }
+    };
+
     useEffect(() => {
         const fetchRequests = async () => {
             try {
                 // Assuming /api/request/all exists based on RequestController
                 const res = await axios.get('/request/all');
                 
-                // Filter only admin-approved requests
+                // Filter admin-approved requests and those with 'requested' status (donated by donors)
                 const approvedRequests = res.data.filter(request => 
-                    request.approved === true || request.status === 'approved'
+                    request.approved === true || request.status === 'approved' || request.status === 'requested'
                 );
                 
                 setRequests(approvedRequests);
@@ -117,69 +160,215 @@ const RequestFeed = ({ axios }) => {
                     <p className="text-gray-500">No requests found matching your criteria.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredRequests.map((req) => (
-                        <div key={req.id} className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                            {req.photo ? (
+                        <div key={req.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-orange-100 group">
+                            <div className="relative h-48 overflow-hidden">
                                 <img
-                                    src={`http://localhost:8080${req.photo}`}
+                                    src={req.photo ? `http://localhost:8080${req.photo}` : "https://images.unsplash.com/photo-1593759608979-8a5f6e3e0b8c?auto=format&fit=crop&q=80"}
                                     alt={req.title}
-                                    className="w-full h-48 object-cover"
-                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/400x300?text=No+Image'; }}
+                                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://images.unsplash.com/photo-1593759608979-8a5f6e3e0b8c?auto=format&fit=crop&q=80";
+                                    }}
                                 />
-                            ) : (
-                                <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
-                                    No Image
-                                </div>
-                            )}
-                            <div className="p-5">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium uppercase">
-                                        {req.type || 'General'}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                        {new Date(req.createdAt || Date.now()).toLocaleDateString()}
+                                <div className="absolute top-3 right-3">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                                        req.status?.toLowerCase() === 'urgent'
+                                            ? 'bg-red-500 text-white animate-pulse'
+                                            : 'bg-orange-500 text-white'
+                                    }`}>
+                                        {req.status || 'Urgent'}
                                     </span>
                                 </div>
-                                <h3 className="font-bold text-lg text-gray-900 mb-2">{req.title}</h3>
-                                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{req.description}</p>
+                                <div className="absolute top-3 left-3">
+                                    <span className="px-3 py-1 rounded-full text-xs font-medium shadow-sm bg-blue-100 text-blue-700 border border-blue-200">
+                                        {req.amount ? `${req.amount} People` : 'Any Amount'}
+                                    </span>
+                                </div>
+                            </div>
 
-                                <div className="space-y-2 text-sm text-gray-500 mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-4 h-4" />
-                                        <span className="truncate">{req.location || req.address || 'Location not specified'}</span>
+                            <div className="p-5 space-y-4">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-1">{req.title}</h3>
+                                    <p className="text-gray-500 text-sm line-clamp-2">{req.description}</p>
+                                </div>
+
+                                <div className="space-y-2 text-sm text-gray-600">
+                                    <div className="flex items-start gap-2">
+                                        <MapPin className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
+                                        <span className="line-clamp-1">{req.location || req.address || "Address Available"}</span>
                                     </div>
-                                    {req.latitude && req.longitude && (
-                                        <div className="ml-6">
-                                            <div className="text-xs text-blue-600 mb-1">
-                                                <a
-                                                    href={`https://www.google.com/maps/search/?api=1&query=${req.latitude},${req.longitude}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="hover:underline flex items-center gap-1"
-                                                >
-                                                    <MapPin className="w-3 h-3" /> View on Map
-                                                </a>
-                                            </div>
-                                            {userLocation && (
-                                                <p className="text-xs text-gray-500">
-                                                    {calculateDistance(userLocation.latitude, userLocation.longitude, req.latitude, req.longitude).toFixed(1)} km away
-                                                </p>
-                                            )}
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-orange-500 shrink-0" />
+                                        <span>Requested: {new Date(req.createdAt || Date.now()).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 text-orange-500 shrink-0" />
+                                        <span>Status: {req.status || "Urgent"}</span>
+                                    </div>
+                                    {userLocation && req.latitude && req.longitude && (
+                                        <div className="flex items-center gap-2">
+                                            <Navigation className="w-4 h-4 text-orange-500 shrink-0" />
+                                            <span>{calculateDistance(userLocation.latitude, userLocation.longitude, req.latitude, req.longitude).toFixed(1)} km away</span>
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-2">
-                                        <User className="w-4 h-4" />
-                                        <span>Recipient ID: {req.recipientId}</span>
-                                    </div>
                                 </div>
 
-                                <button className="w-full py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors font-medium">
-                                    View Details
-                                </button>
+                                <div className="pt-4 flex gap-3 border-t border-gray-100">
+                                    <button 
+                                        onClick={() => setViewDetailsModal(req)}
+                                        disabled={req.status === 'requested'}
+                                        className={`flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                                            req.status === 'requested'
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20'
+                                        }`}
+                                    >
+                                        {req.status === 'requested' ? (
+                                            <>
+                                                <CheckCircle className="w-4 h-4" /> Donated
+                                            </>
+                                        ) : (
+                                            'Donate Now'
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${req.latitude},${req.longitude}`)}`, "_blank")}
+                                        className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors border border-orange-200"
+                                        title="Track Location"
+                                    >
+                                        <Navigation className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* View Details Modal */}
+            {viewDetailsModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                            <h2 className="text-2xl font-bold text-gray-800">Request Details</h2>
+                            <button
+                                onClick={() => setViewDetailsModal(null)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-gray-600" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Image */}
+                            <div className="rounded-xl overflow-hidden cursor-pointer" onClick={() => window.open(viewDetailsModal.photo ? `http://localhost:8080${viewDetailsModal.photo}` : "https://via.placeholder.com/400x300?text=No+Image", '_blank')}>
+                                <img
+                                    src={viewDetailsModal.photo ? `http://localhost:8080${viewDetailsModal.photo}` : "https://via.placeholder.com/400x300?text=No+Image"}
+                                    alt={viewDetailsModal.title}
+                                    className="w-full h-64 object-cover hover:opacity-90 transition-opacity"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
+                                    }}
+                                />
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Request Title</label>
+                                    <p className="text-lg font-bold text-gray-800 mt-1">{viewDetailsModal.title}</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Description</label>
+                                    <p className="text-gray-700 mt-1">{viewDetailsModal.description}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Type</label>
+                                        <p className="mt-1">
+                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 border border-blue-200 uppercase">
+                                                {viewDetailsModal.type || 'General'}
+                                            </span>
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Status</label>
+                                        <p className="mt-1">
+                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 border border-green-200 capitalize">
+                                                {viewDetailsModal.status || 'Active'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Recipient ID</label>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <User className="w-5 h-5 text-green-600" />
+                                        <p className="text-gray-700 font-medium">{viewDetailsModal.recipientId}</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Location</label>
+                                    <div className="flex items-start gap-2 mt-1">
+                                        <MapPin className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                                        <p className="text-gray-700">{viewDetailsModal.location || viewDetailsModal.address || 'Location not specified'}</p>
+                                    </div>
+                                    {viewDetailsModal.latitude && viewDetailsModal.longitude && userLocation && (
+                                        <p className="text-sm text-gray-500 ml-7 mt-1">
+                                            Distance: {calculateDistance(userLocation.latitude, userLocation.longitude, viewDetailsModal.latitude, viewDetailsModal.longitude).toFixed(1)} km away
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Created Date</label>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Calendar className="w-5 h-5 text-green-600" />
+                                        <p className="text-gray-700">{formatDate(viewDetailsModal.createdAt)}</p>
+                                    </div>
+                                </div>
+
+                                {viewDetailsModal.amount && (
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">People to Serve</label>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Package className="w-5 h-5 text-green-600" />
+                                            <p className="text-gray-700 font-medium">{viewDetailsModal.amount} people</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-4 border-t">
+                                {viewDetailsModal.latitude && viewDetailsModal.longitude && (
+                                    <button
+                                        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${viewDetailsModal.latitude},${viewDetailsModal.longitude}`, '_blank')}
+                                        className="flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20"
+                                    >
+                                        <MapPin className="w-5 h-5" />
+                                        View on Map
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => handleDonateRequest(viewDetailsModal.id)}
+                                    className="flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-orange-600 text-white hover:bg-orange-700 shadow-lg shadow-orange-600/20"
+                                >
+                                    <Heart className="w-5 h-5" />
+                                    Donate Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

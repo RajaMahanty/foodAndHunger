@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Heart, HandHeart, Truck, Users, CheckCircle, ArrowRight } from 'lucide-react';
 import AuthModal from '../utils/AuthModal';
@@ -9,11 +9,29 @@ const Volunteer = () => {
     const { publicAxiosInstance } = useOutletContext();
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showVolunteerModal, setShowVolunteerModal] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isRegistered, setIsRegistered] = useState(false);
+
+    useEffect(() => {
+        checkAuthStatus();
+    }, []);
+
+    const checkAuthStatus = () => {
+        const loggedIn = localStorage.getItem('logged_in') === 'true';
+        const registered = localStorage.getItem('is_registered') === 'true';
+        
+        setIsLoggedIn(loggedIn);
+        setIsRegistered(loggedIn && registered);
+    };
 
     const handleBecomeVolunteer = () => {
-        const isLoggedIn = localStorage.getItem('logged_in');
-        if (!isLoggedIn) {
+        const loggedIn = localStorage.getItem('logged_in') === 'true';
+        const registered = localStorage.getItem('is_registered') === 'true';
+        
+        if (!loggedIn) {
             setShowAuthModal(true);
+        } else if (registered) {
+            toast.info("You are already registered!");
         } else {
             setShowVolunteerModal(true);
         }
@@ -21,10 +39,28 @@ const Volunteer = () => {
 
     const handleLoginSuccess = () => {
         setShowAuthModal(false);
-        setShowVolunteerModal(true);
+        
+        // Small delay to ensure localStorage is updated
+        setTimeout(() => {
+            checkAuthStatus();
+            
+            // Check if user is already registered
+            const registered = localStorage.getItem('is_registered') === 'true';
+            
+            if (!registered) {
+                setShowVolunteerModal(true);
+            } else {
+                toast.info("You are already registered!");
+            }
+        }, 100);
     };
 
     const roles = [
+        {
+            icon: <Heart className="w-8 h-8 text-green-600" />,
+            title: "Compassionate Support",
+            description: "Provide emotional and logistical support to those in need, ensuring dignity and respect in every interaction."
+        },
         {
             icon: <Truck className="w-8 h-8 text-green-600" />,
             title: "Food Pickup & Delivery",
@@ -47,6 +83,8 @@ const Volunteer = () => {
         }
     ];
 
+    const showButtons = !isRegistered;
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
@@ -57,6 +95,12 @@ const Volunteer = () => {
                     <p className="text-xl md:text-2xl text-green-100 mb-8 max-w-2xl mx-auto">
                         Join our network of dedicated volunteers and help bridge the gap between surplus food and those in need.
                     </p>
+                    <button
+                        onClick={handleBecomeVolunteer}
+                        className="bg-white text-green-600 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-green-50 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                    >
+                        Become a Volunteer <ArrowRight className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
 
@@ -81,6 +125,23 @@ const Volunteer = () => {
                             </p>
                         </div>
                     ))}
+                </div>
+            </div>
+
+            {/* Call to Action Bottom */}
+            <div className="bg-white py-16 px-4 border-t border-gray-100">
+                <div className="max-w-4xl mx-auto text-center bg-green-50 rounded-3xl p-8 md:p-12">
+                    <Heart className="w-12 h-12 text-green-600 mx-auto mb-6 fill-green-600" />
+                    <h2 className="text-3xl font-bold text-gray-800 mb-4">Ready to Make an Impact?</h2>
+                    <p className="text-gray-600 mb-8 max-w-xl mx-auto">
+                        Your time and effort can save lives. Sign up today and start your journey as a Food & Hunger volunteer.
+                    </p>
+                    <button
+                        onClick={handleBecomeVolunteer}
+                        className="bg-green-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-green-700 transition-all"
+                    >
+                        Join Us Now
+                    </button>
                 </div>
             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, MapPin, Calendar, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Calendar, Package, Clock, CheckCircle, XCircle, AlertCircle, Navigation, Heart, Eye, X } from 'lucide-react';
 import DonationForm from './DonationForm';
 
 import toast from 'react-hot-toast';
@@ -10,6 +10,23 @@ const DonationList = ({ donorId, axios, donorProfile }) => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingDonation, setEditingDonation] = useState(null);
     const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, completed: 0 });
+    const [viewDetailsModal, setViewDetailsModal] = useState(null);
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const openLiveLocation = (lat, lon, address) => {
+        if (lat && lon) {
+            window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
+        } else if (address) {
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+        } else {
+            alert('Location information not available');
+        }
+    };
 
     const fetchDonations = async () => {
         try {
@@ -153,60 +170,107 @@ const DonationList = ({ donorId, axios, donorProfile }) => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {donations.filter(d => d.status !== 'completed').map((donation) => (
-                        <div key={donation.id} className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                            {donation.photo ? (
+                        <div key={donation.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-green-100 group">
+                            <div className="relative h-48 overflow-hidden">
                                 <img
-                                    src={`http://localhost:8080${donation.photo}`}
+                                    src={donation.photo ? `http://localhost:8080${donation.photo}` : "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&q=80"}
                                     alt={donation.title}
-                                    className="w-full h-48 object-cover"
-                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/400x300?text=No+Image'; }}
+                                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&q=80";
+                                    }}
                                 />
-                            ) : (
-                                <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
-                                    No Image
-                                </div>
-                            )}
-                            <div className="p-5">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium uppercase">
-                                        {donation.type}
-                                    </span>
-                                    <span className={`px-2 py-1 text-xs rounded-full font-medium uppercase ${donation.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
-                                        }`}>
-                                        {donation.status || 'Active'}
+                                <div className="absolute top-3 right-3">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                                        donation.type?.toLowerCase() === 'veg' 
+                                            ? 'bg-green-100 text-green-700 border border-green-200' 
+                                            : 'bg-red-100 text-red-700 border border-red-200'
+                                    }`}>
+                                        {donation.type || 'Veg'}
                                     </span>
                                 </div>
-                                <h3 className="font-bold text-lg text-gray-900 mb-2">{donation.title}</h3>
-                                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{donation.description}</p>
+                            </div>
 
-                                <div className="flex items-center gap-2 text-gray-500 text-sm mb-4">
-                                    <MapPin className="w-4 h-4" />
-                                    <span className="truncate">{donation.location}</span>
+                            <div className="p-5 space-y-4">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-1">{donation.title}</h3>
+                                    {donorProfile && (
+                                        <p className="text-sm font-medium text-green-600 mb-2">
+                                            By: {donorProfile.organizationName || donorProfile.name}
+                                        </p>
+                                    )}
+                                    <p className="text-gray-500 text-sm line-clamp-2">{donation.description}</p>
                                 </div>
 
-                                <div className="flex gap-2 pt-4 border-t">
-                                    <button
-                                        onClick={() => handleEdit(donation)}
-                                        disabled={donation.status === 'out_for_delivery' || donation.status === 'completed'}
-                                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${donation.status === 'out_for_delivery' || donation.status === 'completed'
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(donation.id)}
-                                        disabled={donation.status === 'out_for_delivery' || donation.status === 'completed'}
-                                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${donation.status === 'out_for_delivery' || donation.status === 'completed'
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-red-50 text-red-600 hover:bg-red-100'
-                                            }`}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                        Delete
-                                    </button>
+                                <div className="space-y-2 text-sm text-gray-600">
+                                    <div className="flex items-start gap-2">
+                                        <MapPin className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                                        <span className="line-clamp-1">{donation.address || donation.location || "Address Available"}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-green-600 shrink-0" />
+                                        <span>Added: {formatDate(donation.createdAt)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 text-green-600 shrink-0" />
+                                        <span>Status: {donation.status || "Available"}</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex gap-3 border-t border-gray-100">
+                                    {donation.status === 'approved' ? (
+                                        <>
+                                            <button
+                                                onClick={() => setViewDetailsModal(donation)}
+                                                className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors font-medium flex items-center justify-center gap-2"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                View Details
+                                            </button>
+                                            <button
+                                                onClick={() => openLiveLocation(donation.latitude, donation.longitude, donation.address || donation.location)}
+                                                className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition-colors border border-green-200"
+                                                title="Track Location"
+                                            >
+                                                <Navigation className="w-5 h-5" />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => handleEdit(donation)}
+                                                disabled={donation.status === 'out_for_delivery' || donation.status === 'completed'}
+                                                className={`flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                                                    donation.status === 'out_for_delivery' || donation.status === 'completed'
+                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        : 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20'
+                                                }`}
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(donation.id)}
+                                                disabled={donation.status === 'out_for_delivery' || donation.status === 'completed'}
+                                                className={`flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                                                    donation.status === 'out_for_delivery' || donation.status === 'completed'
+                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20'
+                                                }`}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Delete
+                                            </button>
+                                            <button
+                                                onClick={() => openLiveLocation(donation.latitude, donation.longitude, donation.address || donation.location)}
+                                                className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition-colors border border-green-200"
+                                                title="Track Location"
+                                            >
+                                                <Navigation className="w-5 h-5" />
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -223,6 +287,137 @@ const DonationList = ({ donorId, axios, donorProfile }) => {
                     donorId={donorId}
                     axios={axios}
                 />
+            )}
+
+            {/* View Details Modal */}
+            {viewDetailsModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                            <h2 className="text-2xl font-bold text-gray-800">Donation Details</h2>
+                            <button
+                                onClick={() => setViewDetailsModal(null)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-gray-600" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Image */}
+                            <div className="rounded-xl overflow-hidden cursor-pointer" onClick={() => window.open(viewDetailsModal.photo ? `http://localhost:8080${viewDetailsModal.photo}` : "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&q=80", '_blank')}>
+                                <img
+                                    src={viewDetailsModal.photo ? `http://localhost:8080${viewDetailsModal.photo}` : "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&q=80"}
+                                    alt={viewDetailsModal.title}
+                                    className="w-full h-64 object-cover hover:opacity-90 transition-opacity"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&q=80";
+                                    }}
+                                />
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Food Name</label>
+                                    <p className="text-lg font-bold text-gray-800 mt-1">{viewDetailsModal.title}</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Description</label>
+                                    <p className="text-gray-700 mt-1">{viewDetailsModal.description}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Type</label>
+                                        <p className="mt-1">
+                                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                                                viewDetailsModal.type?.toLowerCase() === 'veg' 
+                                                    ? 'bg-green-100 text-green-700 border border-green-200' 
+                                                    : 'bg-red-100 text-red-700 border border-red-200'
+                                            }`}>
+                                                {viewDetailsModal.type || 'Veg'}
+                                            </span>
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Status</label>
+                                        <p className="mt-1">
+                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 border border-green-200 capitalize">
+                                                {viewDetailsModal.status || 'Available'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Donor</label>
+                                    <p className="text-gray-700 mt-1 font-medium">
+                                        {donorProfile?.organizationName || donorProfile?.name || 'N/A'}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Location</label>
+                                    <div className="flex items-start gap-2 mt-1">
+                                        <MapPin className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                                        <p className="text-gray-700">{viewDetailsModal.address || viewDetailsModal.location || 'Address Available'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Created Date</label>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Calendar className="w-5 h-5 text-green-600" />
+                                            <p className="text-gray-700">{formatDate(viewDetailsModal.createdAt)}</p>
+                                        </div>
+                                    </div>
+
+                                    {viewDetailsModal.expiryDate && (
+                                        <div>
+                                            <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Expiry Date</label>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Clock className="w-5 h-5 text-green-600" />
+                                                <p className="text-gray-700">{formatDate(viewDetailsModal.expiryDate)}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {viewDetailsModal.quantity && (
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Quantity</label>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Package className="w-5 h-5 text-green-600" />
+                                            <p className="text-gray-700 font-medium">{viewDetailsModal.quantity} servings</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-4 border-t">
+                                <button
+                                    onClick={() => openLiveLocation(viewDetailsModal.latitude, viewDetailsModal.longitude, viewDetailsModal.address || viewDetailsModal.location)}
+                                    className="flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20"
+                                >
+                                    <Navigation className="w-5 h-5" />
+                                    View on Map
+                                </button>
+                                <button
+                                    onClick={() => setViewDetailsModal(null)}
+                                    className="flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

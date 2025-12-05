@@ -195,6 +195,27 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
             return;
         }
 
+        // Validate required fields
+        if (!formData.name || !formData.phone || !formData.email) {
+            toast.error("Please fill in all required fields.");
+            setLoading(false);
+            return;
+        }
+
+        if (role !== 'volunteer') {
+            if (!formData.age || !formData.aadhaarNumber || !formData.panNumber || !formData.location) {
+                toast.error("Please fill in all required fields including Age, Aadhaar, PAN, and Location.");
+                setLoading(false);
+                return;
+            }
+        } else {
+            if (!formData.availability || !formData.skills || !formData.reason || !formData.emergencyContactPhone || !formData.aadhaarNumber || !formData.panNumber || !formData.location) {
+                toast.error("Please fill in all required fields.");
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             let payload = {};
             let endpoint = '';
@@ -220,7 +241,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                     name: formData.name,
                     age: Number(formData.age),
                     address: formData.address,
-                    organizationName: formData.organizationName,
+                    organizationName: formData.organizationName || "",
                     pan: formData.panNumber,
                     aadhaar: formData.aadhaarNumber,
                     phone: formData.phone,
@@ -228,14 +249,18 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                     location: formData.location,
                     latitude: formData.latitude,
                     longitude: formData.longitude,
-                    remarks: formData.remarks,
+                    remarks: formData.remarks || "",
                     organization_certificate_id: formData.organization_certificate_id ? Number(formData.organization_certificate_id) : null,
                     consent: formData.consent
                 };
                 endpoint = role === 'donor' ? 'http://localhost:8080/api/donor/add' : 'http://localhost:8080/api/recipient/add';
             }
 
+            console.log("Submitting payload:", payload);
+            console.log("Endpoint:", endpoint);
+
             const response = await axios.post(endpoint, payload);
+            console.log("Response:", response);
 
             if (role === 'volunteer') {
                 // Volunteer backend returns a string message, not the object/ID.
@@ -278,11 +303,25 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                 }
             }
         } catch (err) {
-            console.error(err);
+            console.error("Registration error:", err);
+            console.error("Error response:", err.response);
             let errorMsg = err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response?.data : "Registration failed. Please try again.");
 
-            if (errorMsg === "Failed to add volunteer") {
+            // Better error messages for common issues
+            if (errorMsg === "User not present") {
+                errorMsg = "Unable to verify your account. Please ensure you are logged in and try again.";
+            } else if (errorMsg === "Failed to add volunteer") {
                 errorMsg = "Registration failed. Email, Phone, Aadhaar, or PAN might already be registered.";
+            } else if (errorMsg.includes("Duplicate")) {
+                if (errorMsg.includes("email")) {
+                    errorMsg = "This email is already registered. Please use a different email.";
+                } else if (errorMsg.includes("phone")) {
+                    errorMsg = "This phone number is already registered. Please use a different number.";
+                } else if (errorMsg.includes("Aadhaar")) {
+                    errorMsg = "This Aadhaar number is already registered. Please check your details.";
+                } else if (errorMsg.includes("PAN")) {
+                    errorMsg = "This PAN number is already registered. Please check your details.";
+                }
             }
 
             toast.error(errorMsg);

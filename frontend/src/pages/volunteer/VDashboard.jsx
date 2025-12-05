@@ -153,8 +153,8 @@ const VDashboard = () => {
             // Let's show 'approved' and 'pending' for now, or just 'approved' if admin workflow exists.
             // Based on previous context, admin approves things. So volunteers should see 'approved'.
             items = [
-                ...normDonations.filter(d => d.status === 'approved'),
-                ...normRequests.filter(r => r.status === 'approved')
+                ...normDonations.filter(d => d.status === 'requested'), // need to check
+                ...normRequests.filter(r => r.status === 'requested')
             ];
         } else if (activeTab === 'active') {
             // Out for delivery
