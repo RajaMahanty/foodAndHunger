@@ -114,7 +114,7 @@ const Navbar = () => {
         setMenuOpen(false);
     };
 
-    const navItems = ["Volunteers"];
+    const navItems = ["Volunteers", "About", "Contact"];
 
     return (
         <>
@@ -162,6 +162,19 @@ const Navbar = () => {
                         </li>
                         <li>
                             <Link
+                                to="/volunteer"
+                                onClick={() => handleLinkClick("/volunteer")}
+                                className={`relative px-5 py-2.5 rounded-xl hover:text-green-600 transition-all duration-300 group overflow-hidden ${activeLink === "/volunteer" ? "text-green-600" : ""
+                                    }`}
+                            >
+                                <span className="absolute inset-0 bg-green-50 dark:bg-green-900/10 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></span>
+                                <span className="relative z-10">Volunteers</span>
+                                <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-600 rounded-full transition-all duration-300 ${activeLink === "/volunteer" ? "opacity-100 scale-100" : "opacity-0 scale-0"
+                                    }`}></span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
                                 to="/about"
                                 onClick={() => handleLinkClick("about")}
                                 className={`relative px-5 py-2.5 rounded-xl hover:text-green-600 transition-all duration-300 group overflow-hidden ${activeLink === "about" ? "text-green-600" : ""
@@ -175,14 +188,14 @@ const Navbar = () => {
                         </li>
                         <li>
                             <Link
-                                to="/volunteer"
-                                onClick={() => handleLinkClick("/volunteer")}
+                                to="/contact"
+                                onClick={() => handleLinkClick("/contact")}
                                 className={`relative px-5 py-2.5 rounded-xl hover:text-green-600 transition-all duration-300 group overflow-hidden ${activeLink === "/volunteer" ? "text-green-600" : ""
                                     }`}
                             >
                                 <span className="absolute inset-0 bg-green-50 dark:bg-green-900/10 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></span>
-                                <span className="relative z-10">Volunteers</span>
-                                <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-600 rounded-full transition-all duration-300 ${activeLink === "/volunteer" ? "opacity-100 scale-100" : "opacity-0 scale-0"
+                                <span className="relative z-10">Contact Us</span>
+                                <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-600 rounded-full transition-all duration-300 ${activeLink === "/contact" ? "opacity-100 scale-100" : "opacity-0 scale-0"
                                     }`}></span>
                             </Link>
                         </li>

@@ -13,6 +13,7 @@ import Login from './pages/Auth/LoginPopUp';
 import Register from './pages/Auth/Register';
 import About from './pages/main/About';
 import JoinUs from './pages/Auth/JoinUs';
+import ContactUs from './pages/main/ContactUs';
 import VDashboard from './pages/volunteer/VDashboard';
 import VolunteerDetail from './pages/volunteer/VolunteerDetail';
 import Volunteer from './Components/volunteer/Volunteer';
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
             {
                 path: "volunteer",
                 element: <Volunteer />
+            },
+            {
+                path: "contact",
+                element: <ContactUs />
             }
         ]
     },
