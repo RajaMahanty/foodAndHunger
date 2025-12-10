@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
@@ -25,6 +25,10 @@ import ManageDonors from './Components/admin/ManageDonors.jsx';
 import ManageRecipients from './Components/admin/ManageRecipients.jsx';
 import ManageUsers from './Components/admin/ManageUsers.jsx';
 import ManageVolunteers from './Components/admin/ManageVolunteers';
+import Page from './Components/utils/Page.jsx';
+
+
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -33,19 +37,19 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Home /> // check if user logged in if yes, pass the param
+                element: <Page title={"Food & Hunger"}>  <Home /> </Page>// check if user logged in if yes, pass the param
             },
             {
                 path: "about",
-                element: <About />
+                element: <Page title={"F&H - About Us"}> <About /> </Page>
             },
             {
                 path: "volunteer",
-                element: <Volunteer />
+                element: <Page title={"F&H - Volunteers"}> <Volunteer /> </Page>
             },
             {
                 path: "contact",
-                element: <ContactUs />
+                element: <Page title={"F&H - Contact Us"}> <ContactUs /> </Page>
             }
         ]
     },
@@ -57,11 +61,11 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "dashboard",
-                element: <DDashboard />
+                element: <Page title={"F&H - Donor Dashboard"}> <DDashboard /> </Page>
             },
             {
                 path: "details/:donor_id",
-                element: <DonorDetail />
+                element: <Page title={"F&H - Donor Details"}> <DonorDetail /> </Page>
             },
         ]
     },
@@ -72,11 +76,11 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "dashboard",
-                element: <RDashboard />
+                element: <Page title={"F&H - Recipient Dashboard"}> <RDashboard /> </Page>
             },
             {
                 path: "details/:recipient_id",
-                element: <RecipientDetail />
+                element: <Page title={"F&H - Recipient Details"}> <RecipientDetail /> </Page>
             },
         ]
     },
@@ -87,11 +91,11 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "dashboard",
-                element: <VDashboard />
+                element: <Page title={"F&H - Volunteer Dashboard"}> <VDashboard /> </Page>
             },
             {
                 path: "details/:volunteer_id",
-                element: <VolunteerDetail />
+                element: <Page title={"F&H - Volunteer Details"}> <VolunteerDetail /> </Page>
             },
         ]
     },
@@ -101,31 +105,31 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "dashboard",
-                element: <AdminDashboard />
+                element: <Page title={"F&H - Admin Dashboard"}> <AdminDashboard /> </Page>
             },
             {
                 path: "requests",
-                element: <ManageRequests />
+                element: <Page title={"F&H - Manage Requests"}> <ManageRequests /> </Page>
             },
             {
                 path: "donations",
-                element: <ManageDonations />
+                element: <Page title={"F&H - Manage Donations"}> <ManageDonations /> </Page>
             },
             {
                 path: "users",
-                element: <ManageUsers />
+                element: <Page title={"F&H - Manage Users"}> <ManageUsers /> </Page>
             },
             {
                 path: "donors",
-                element: <ManageDonors />
+                element: <Page title={"F&H - Manage Donors"}> <ManageDonors /> </Page>
             },
             {
                 path: "recipients",
-                element: <ManageRecipients />
+                element: <Page title={"F&H - Manage Recipients"}> <ManageRecipients /> </Page>
             },
             {
                 path: "volunteers",
-                element: <ManageVolunteers />
+                element: <Page title={"F&H - Manage Volunteers"}> <ManageVolunteers /> </Page>
             }
         ]
     },
@@ -136,23 +140,23 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "login",
-                element: <Login />
+                element: <Page title={"F&H - Login"}> <Login /> </Page>
             },
             {
                 path: "recipient/register",
-                element: <Register />
+                element: <Page title={"F&H - Recipient Registration"}> <Register /> </Page>
             },
             {
                 path: "donor/register",
-                element: <Register />
+                element: <Page title={"F&H - Donor Registration"}> <Register /> </Page>
             },
             {
                 path: "register",
-                element: <Register />
+                element: <Page title={"F&H - Register"}> <Register /> </Page>
             },
             {
                 path: "join_us",
-                element: <JoinUs />
+                element: <Page title={"F&H - Join Us"}> <JoinUs /> </Page>
             },
         ]
     }
