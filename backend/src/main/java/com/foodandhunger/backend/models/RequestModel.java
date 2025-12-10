@@ -18,6 +18,7 @@ public class RequestModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String title;
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
     private double amount;
     private String location;

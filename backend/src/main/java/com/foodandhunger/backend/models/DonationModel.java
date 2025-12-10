@@ -20,6 +20,7 @@ public class DonationModel {
     private int donorId; // Linked donor
     @Column(unique = true)
     private String title;
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
     private String type; // food / clothes / money / etc.
     private String photo; // Path to donation image
