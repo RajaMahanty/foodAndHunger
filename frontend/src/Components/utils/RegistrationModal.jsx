@@ -208,12 +208,53 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
             return;
         }
 
+        // Email Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            toast.error("Please enter a valid email address.");
+            setLoading(false);
+            return;
+        }
+
+        // Phone Validation (10 digits)
+        const phoneRegex = /^[6-9]\d{9}$/;
+        if (!phoneRegex.test(formData.phone)) {
+            toast.error("Please enter a valid 10-digit phone number starting with 6-9.");
+            setLoading(false);
+            return;
+        }
+
+        // PAN Number Validation
+        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+        if (formData.panNumber && !panRegex.test(formData.panNumber)) {
+             toast.error("Please enter a valid PAN number (e.g., ABCDE1234F).");
+             setLoading(false);
+             return;
+        }
+
+        // Aadhaar Number Validation
+        const aadhaarRegex = /^\d{12}$/;
+        if (formData.aadhaarNumber && !aadhaarRegex.test(formData.aadhaarNumber)) {
+            toast.error("Please enter a valid 12-digit Aadhaar number.");
+            setLoading(false);
+            return;
+        }
+
         if (role !== 'volunteer') {
             if (!formData.age || !formData.aadhaarNumber || !formData.panNumber || !formData.location) {
                 toast.error("Please fill in all required fields including Age, Aadhaar, PAN, and Location.");
                 setLoading(false);
                 return;
             }
+
+            // Age Validation
+            const age = Number(formData.age);
+            if (isNaN(age) || age < 18 || age > 150) {
+                 toast.error("Age must be between 18 and 150.");
+                 setLoading(false);
+                 return;
+            }
+
         } else {
             if (!formData.availability || !formData.skills || !formData.reason || !formData.emergencyContactPhone || !formData.aadhaarNumber || !formData.panNumber || !formData.location) {
                 toast.error("Please fill in all required fields.");
@@ -330,7 +371,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                 }
             }
 
-            toast.error(errorMsg);
+            toast.error("Registration failed. Please try again.");
         } finally {
             setLoading(false);
         }

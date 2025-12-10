@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { X, Loader2, Mail, Lock, User } from 'lucide-react';
+import { X, Loader2, Mail, Lock, User, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -64,6 +65,16 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                     return;
                 }
 
+                // Password Validation
+                const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+                if (!passwordRegex.test(formData.password)) {
+                    toast.error("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character", {
+                        duration: 5000, // Show for longer so user can read
+                    });
+                    setLoading(false);
+                    return;
+                }
+
                 // Validate all fields are filled
                 if (!formData.username || !formData.email || !formData.password) {
                     toast.error("Please fill in all fields");
@@ -113,7 +124,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 errorMessage = err.message;
             }
             
-            toast.error(errorMessage);
+            toast.error("Failed to authenticate!");
         } finally {
             setLoading(false);
         }
@@ -196,14 +207,24 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     name="password"
                                     required
                                     value={formData.password}
                                     onChange={handleInputChange}
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                                    className="w-full pl-10 pr-12 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
                                     placeholder="••••••••"
                                 />
+                                <div
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-400 hover:text-gray-600"
+                                    onMouseDown={() => setShowPassword(true)}
+                                    onMouseUp={() => setShowPassword(false)}
+                                    onMouseLeave={() => setShowPassword(false)}
+                                    onTouchStart={() => setShowPassword(true)}
+                                    onTouchEnd={() => setShowPassword(false)}
+                                >
+                                    <Eye className="w-5 h-5" />
+                                </div>
                             </div>
                         </div>
 
@@ -213,14 +234,24 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         name="confirmPassword"
                                         required
                                         value={formData.confirmPassword}
                                         onChange={handleInputChange}
-                                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full pl-10 pr-12 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
                                         placeholder="••••••••"
                                     />
+                                    <div
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-400 hover:text-gray-600"
+                                        onMouseDown={() => setShowPassword(true)}
+                                        onMouseUp={() => setShowPassword(false)}
+                                        onMouseLeave={() => setShowPassword(false)}
+                                        onTouchStart={() => setShowPassword(true)}
+                                        onTouchEnd={() => setShowPassword(false)}
+                                    >
+                                        <Eye className="w-5 h-5" />
+                                    </div>
                                 </div>
                             </div>
                         )}
