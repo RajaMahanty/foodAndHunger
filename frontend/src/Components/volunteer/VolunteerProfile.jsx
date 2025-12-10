@@ -50,7 +50,7 @@ const VolunteerProfile = ({ volunteerId, axios, onUploadSuccess }) => {
             if (editPhoto) {
                 const formDataUpload = new FormData();
                 formDataUpload.append('photo', editPhoto);
-                const photoRes = await axios.post(`/volunteer/${volunteerId}/upload`, formDataUpload, {
+                const photoRes = await axios.post(`/volunteer/${volunteerId}/photo`, formDataUpload, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 setProfile(photoRes.data);
@@ -94,10 +94,8 @@ const VolunteerProfile = ({ volunteerId, axios, onUploadSuccess }) => {
         try {
             const formDataUpload = new FormData();
             if (files.photo) formDataUpload.append('photo', files.photo);
-            if (files.aadhaar) formDataUpload.append('aadhaar', files.aadhaar);
-            if (files.pan) formDataUpload.append('pan', files.pan);
 
-            const res = await axios.post(`/volunteer/${volunteerId}/upload`, formDataUpload, {
+            const res = await axios.post(`/volunteer/${volunteerId}/photo`, formDataUpload, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             toast.success("Documents uploaded successfully!");
@@ -126,7 +124,6 @@ const VolunteerProfile = ({ volunteerId, axios, onUploadSuccess }) => {
     if (loading) return <div className="text-center py-8">Loading profile...</div>;
     if (!profile) return <div className="text-center py-8 text-red-500">Failed to load profile.</div>;
 
-    // Check if documents are already uploaded based on profile data
     const isDocumentUploaded = profile.profilePhotoUrl && profile.aadhaarCard && profile.panCard;
 
     return (
@@ -391,48 +388,6 @@ const VolunteerProfile = ({ volunteerId, axios, onUploadSuccess }) => {
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="bg-gray-50 rounded-xl p-6">
-                                    <h3 className="font-semibold text-gray-900 mb-4">Verification Documents</h3>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                                            <div className="flex items-center gap-3">
-                                                <FileText className="w-5 h-5 text-blue-500" />
-                                                <span className="text-sm font-medium text-gray-700">Aadhaar Card</span>
-                                            </div>
-                                            {profile.aadhaarCard ? (
-                                                <a
-                                                    href={`http://localhost:8080${profile.aadhaarCard}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-blue-600 hover:underline"
-                                                >
-                                                    View
-                                                </a>
-                                            ) : (
-                                                <span className="text-xs text-gray-400">Not uploaded</span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                                            <div className="flex items-center gap-3">
-                                                <FileText className="w-5 h-5 text-blue-500" />
-                                                <span className="text-sm font-medium text-gray-700">PAN Card</span>
-                                            </div>
-                                            {profile.panCard ? (
-                                                <a
-                                                    href={`http://localhost:8080${profile.panCard}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-blue-600 hover:underline"
-                                                >
-                                                    View
-                                                </a>
-                                            ) : (
-                                                <span className="text-xs text-gray-400">Not uploaded</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -469,58 +424,6 @@ const VolunteerProfile = ({ volunteerId, axios, onUploadSuccess }) => {
                                         </span>
                                     </label>
                                 </div>
-                            </div>
-
-                            {/* Aadhaar Upload */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Aadhaar Card</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-blue-500 transition-colors">
-                                    <input
-                                        type="file"
-                                        name="aadhaar"
-                                        accept=".pdf,image/*"
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="aadhaar-upload"
-                                    />
-                                    <label htmlFor="aadhaar-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
-                                            <FileText className="w-6 h-6" />
-                                        </div>
-                                        <span className="text-xs text-gray-600 truncate max-w-full">
-                                            {files.aadhaar ? files.aadhaar.name : "Upload Aadhaar"}
-                                        </span>
-                                    </label>
-                                </div>
-                                {profile.aadhaarCard && (
-                                    <a href={`http://localhost:8080${profile.aadhaarCard}`} target="_blank" rel="noreferrer" className="text-xs text-blue-600 block mt-2 text-center">View Current</a>
-                                )}
-                            </div>
-
-                            {/* PAN Upload */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-blue-500 transition-colors">
-                                    <input
-                                        type="file"
-                                        name="pan"
-                                        accept=".pdf,image/*"
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="pan-upload"
-                                    />
-                                    <label htmlFor="pan-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
-                                            <FileText className="w-6 h-6" />
-                                        </div>
-                                        <span className="text-xs text-gray-600 truncate max-w-full">
-                                            {files.pan ? files.pan.name : "Upload PAN"}
-                                        </span>
-                                    </label>
-                                </div>
-                                {profile.panCard && (
-                                    <a href={`http://localhost:8080${profile.panCard}`} target="_blank" rel="noreferrer" className="text-xs text-blue-600 block mt-2 text-center">View Current</a>
-                                )}
                             </div>
                         </div>
 

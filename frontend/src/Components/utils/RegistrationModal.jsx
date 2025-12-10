@@ -385,7 +385,8 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
             const formDataUpload = new FormData();
             if (files.photo) formDataUpload.append('photo', files.photo);
             if (files.certificate && (role === 'donor' || role === 'recipient')) formDataUpload.append('certificate', files.certificate);
-            if (files.signature) formDataUpload.append('signature', files.signature);
+            if (files.signature && (role === 'donor' || role === 'recipient')) formDataUpload.append('signature', files.signature);
+            // Signature removed for volunteer
 
             let endpoint = '';
             if (role === 'volunteer') {
@@ -788,7 +789,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                                 </div>
                             </div>
 
-                            {(role === 'donor' || (role === 'recipient' && formData.organizationName)) && (
+                            {(role === 'donor' || role === 'recipient') && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Certificate</label>
                                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
@@ -799,7 +800,7 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                                             onChange={handleFileChange}
                                             className="hidden"
                                             id="certificate-upload"
-                                            required={role === 'donor'} // Optional for recipient if they didn't strictly require it, but if they have org name it might be good. Let's keep it required if shown? Or maybe just optional.
+                                            required
                                         />
                                         <label htmlFor="certificate-upload" className="cursor-pointer flex flex-col items-center gap-2">
                                             <Upload className="w-8 h-8 text-gray-400" />
@@ -811,25 +812,30 @@ const RegistrationModal = ({ isOpen, onClose, onRegistrationSuccess }) => {
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Signature (Optional)</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
-                                    <input
-                                        type="file"
-                                        name="signature"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="signature-upload"
-                                    />
-                                    <label htmlFor="signature-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                                        <Upload className="w-8 h-8 text-gray-400" />
-                                        <span className="text-sm text-gray-600">
-                                            {files.signature ? files.signature.name : "Click to upload signature"}
-                                        </span>
-                                    </label>
+                            {(role === 'donor' || role === 'recipient') && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Signature</label>
+                                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+                                        <input
+                                            type="file"
+                                            name="signature"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="signature-upload"
+                                            required
+                                        />
+                                        <label htmlFor="signature-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                                            <Upload className="w-8 h-8 text-gray-400" />
+                                            <span className="text-sm text-gray-600">
+                                                {files.signature ? files.signature.name : "Click to upload signature"}
+                                            </span>
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Volunteer only needs photo, which is already above */}
 
                             <button
                                 type="submit"
